@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git Branching Strategy for AI-Assisted Development — Complete Visual Guide</title>
+<style>
+:root {
+  --bg: #FAFAF9;
+  --card: #FFFFFF;
+  --text: #111827;
+  --text2: #4B5563;
+  --border: #E7E5E4;
+  --accent: #4338CA;
+  --accent-bg: #E4E1FA;
+  --success: #15803D;
+  --warning: #B45309;
+  --error: #B91C1C;
+  --purple: #6D28D9;
+  --sky: #0369A1;
+  --gray: #57534E;
+  /* pastel category fills (backgrounds) */
+  --pf-main: #EEF4FF;      --ps-main: #B9D2FA;      --pd-main: #2451C4;
+  --pf-release: #F4F1FE;   --ps-release: #D2C7F7;   --pd-release: #6B3FD1;
+  --pf-integration: #1E1B3A; --ps-integration: #8C94E8;
+  --pf-ai: #EFF9FF;        --ps-ai: #A9DEF5;        --pd-ai: #0B7AA8;
+  --pf-feature: #EFFBF3;   --ps-feature: #A9E4C1;   --pd-feature: #157A47;
+  --pf-bugfix: #FEF7EC;    --ps-bugfix: #F3D18F;    --pd-bugfix: #9A5B0A;
+  --pf-hotfix: #FDF0EF;    --ps-hotfix: #F0AEA8;    --pd-hotfix: #A5372F;
+  --pf-experiment: #F7F6F4; --ps-experiment: #D3CFC8; --pd-experiment: #57534E;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15.5px;line-height:1.65;-webkit-font-smoothing:antialiased}
+
+header{background:var(--card);border-bottom:1px solid var(--border);padding:22px 48px;display:flex;align-items:center;gap:16px}
+.header-icon{width:42px;height:42px;background:#1E1B3A;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+header h1{font-size:21px;font-weight:700;color:var(--text);letter-spacing:-.01em}
+header p{font-size:13.5px;color:var(--text2);margin-top:1px}
+
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--card);padding:0 48px;position:sticky;top:0;z-index:100;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:14px 18px;cursor:pointer;font-size:14px;font-weight:500;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:color .15s;user-select:none;display:flex;align-items:center;gap:6px}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.tab-num{font-size:11.5px;background:#F3F1EE;color:#57534E;border-radius:99px;padding:1px 7px;font-weight:600}
+.tab.active .tab-num{background:var(--accent-bg);color:var(--accent)}
+
+.content{padding:44px 5vw 90px;max-width:none;margin:0 auto}
+.tab-panel{display:none}
+.tab-panel.active{display:block;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.section-title{font-size:25px;font-weight:700;color:var(--text);margin-bottom:7px;margin-top:46px;letter-spacing:-.01em}
+.section-title:first-child{margin-top:0}
+.section-desc{font-size:15.5px;color:var(--text2);margin-bottom:24px;line-height:1.75;max-width:980px}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:24px;box-shadow:0 1px 2px rgba(28,25,23,.04);margin-bottom:16px}
+h2{font-size:16.5px;font-weight:600;color:var(--text);margin-bottom:11px}
+h3{font-size:14.5px;font-weight:600;color:var(--text);margin-bottom:7px}
+p{color:var(--text2);font-size:14.5px;margin-bottom:10px}
+p:last-child{margin-bottom:0}
+
+code{font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;background:#F3F1EE;color:#292524;padding:1px 6px;border-radius:3px;border:1px solid #E7E5E4}
+pre{background:#1E1B3A;color:#E7E5E4;padding:15px 17px;border-radius:8px;font-size:12.5px;font-family:'SF Mono','Fira Code',monospace;overflow-x:auto;margin:10px 0;line-height:1.9}
+pre .c{color:#8C94E8}
+pre .k{color:#A9DEF5}
+pre .s{color:#A9E4C1}
+pre .v{color:#F3D18F}
+pre .f{color:#D2C7F7}
+
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600}
+.b-blue{background:#EEF4FF;color:#2451C4}
+.b-green{background:#EFFBF3;color:#157A47}
+.b-amber{background:#FEF7EC;color:#9A5B0A}
+.b-red{background:#FDF0EF;color:#A5372F}
+.b-purple{background:#F4F1FE;color:#6B3FD1}
+.b-gray{background:#F3F1EE;color:#57534E}
+.b-sky{background:#EFF9FF;color:#0B7AA8}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:900px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+
+.alert{padding:13px 16px;border-radius:6px;font-size:14px;border-left:3px solid;margin:14px 0;line-height:1.6}
+.alert-info{background:#EEF4FF;border-color:var(--accent);color:#2E2A6E}
+.alert-warn{background:#FEF7EC;border-color:var(--warning);color:#78350F}
+.alert-red{background:#FDF0EF;border-color:var(--error);color:#7F1D1D}
+.alert-green{background:#EFFBF3;border-color:var(--success);color:#14532D}
+
+.diagram{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:18px 0}
+.diagram-title{background:#FAFAF9;border-bottom:1px solid var(--border);padding:10px 18px;font-size:11.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
+.diagram > svg{display:block;width:100%;height:auto}
+.diagram-legend{display:flex;flex-wrap:wrap;gap:16px;padding:13px 18px;border-top:1px solid var(--border);background:#FCFCFB}
+.leg{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text2);font-weight:600}
+.leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+/* concept / branch row card */
+.branch-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:17px 19px;border-left:4px solid var(--accent)}
+.branch-card .bname{font-family:'SF Mono',monospace;font-weight:700;font-size:14.5px;color:var(--text);margin-bottom:5px}
+.branch-card .bdesc{font-size:13.5px;color:var(--text2);margin-bottom:9px;line-height:1.55}
+.branch-card .brow{display:flex;gap:6px;font-size:12.5px;margin-top:5px}
+.branch-card .brow b{color:var(--text);font-weight:600;flex-shrink:0}
+.branch-card .brow span{color:var(--text2)}
+
+/* hook card reuses the same labeled-row pattern */
+.hook-card .brow{display:flex;gap:6px;font-size:12.5px;margin-top:8px;line-height:1.5}
+.hook-card .brow b{color:var(--text);font-weight:600;flex-shrink:0;white-space:nowrap}
+.hook-card .brow span{color:var(--text2)}
+
+/* chip list */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:#F3F1EE;border:1px solid var(--border);color:#292524;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:7px;font-family:'SF Mono',monospace}
+.chip-red{background:#FDF0EF;border-color:#F0AEA8;color:#A5372F}
+.chip-sky{background:#EFF9FF;border-color:#A9DEF5;color:#0B7AA8}
+.chip-green{background:#EFFBF3;border-color:#A9E4C1;color:#157A47}
+.chip-purple{background:#F4F1FE;border-color:#D2C7F7;color:#6B3FD1}
+.chip-amber{background:#FEF7EC;border-color:#F3D18F;color:#9A5B0A}
+
+/* checklist */
+.checklist{list-style:none;display:flex;flex-direction:column;gap:9px}
+.checklist li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--text2);line-height:1.55}
+.checklist li::before{content:"✓";flex-shrink:0;width:19px;height:19px;background:#EFFBF3;color:#157A47;border-radius:5px;font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.checklist.warn li::before{content:"!";background:#FEF7EC;color:#9A5B0A}
+
+/* tool row */
+.tool-row{display:flex;gap:13px;padding:13px 0;border-bottom:1px solid #F3F1EE}
+.tool-row:last-child{border-bottom:none}
+.tool-icon{width:36px;height:36px;border-radius:8px;background:#F3F1EE;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--accent);flex-shrink:0;border:1px solid var(--border)}
+.tool-name{font-weight:700;font-size:13.5px;color:var(--text)}
+.tool-desc{font-size:12.5px;color:var(--text2);margin-top:1px}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;padding:9px 13px;background:#FAFAF9;border-bottom:2px solid var(--border);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);font-weight:700}
+td{padding:10px 13px;border-bottom:1px solid #F3F1EE;vertical-align:top;color:var(--text2)}
+td:first-child{font-family:'SF Mono',monospace;color:var(--accent);font-size:12.5px;font-weight:600}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#FBFBFA}
+td.center{text-align:center}
+.tick{color:var(--success);font-weight:800}
+.dash{color:#57534E}
+
+/* tag pill (oss / enterprise) */
+.tag{display:inline-block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:5px;margin-right:6px;margin-bottom:3px}
+.tag-oss{background:#EFFBF3;color:#157A47}
+.tag-ent{background:#F4F1FE;color:#6B3FD1}
+
+/* group subheading inside a tab (client-side vs server-side hooks) */
+.group-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin:28px 0 12px;display:flex;align-items:center;gap:8px}
+.group-label::after{content:"";flex:1;height:1px;background:var(--border)}
+
+.footer-note{margin-top:52px;padding-top:22px;border-top:1px solid var(--border);font-size:13px;color:var(--text2);text-align:center}
+
+/* ── top summary (overview + stats + tab preview) ── */
+.summary{padding:28px 5vw 8px;max-width:1120px;margin:0 auto}
+.summary h2{font-size:22px;font-weight:700;margin-bottom:9px;letter-spacing:-.01em}
+.summary > p{color:var(--text2);font-size:15px;line-height:1.75;max-width:820px}
+
+.stat-strip{display:flex;margin-top:20px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--card)}
+.stat{flex:1;padding:15px 10px;text-align:center;border-left:1px solid var(--border)}
+.stat:first-child{border-left:none}
+.stat b{display:block;font-size:25px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.stat span{display:block;font-size:11.5px;color:var(--text2);margin-top:3px;line-height:1.3}
+@media(max-width:760px){.stat-strip{flex-wrap:wrap}.stat{flex:1 1 33%;border-left:none;border-top:1px solid var(--border)}}
+
+.preview-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+.pcard{border:1px solid var(--border);border-radius:10px;padding:17px 18px;background:var(--card);cursor:pointer;transition:border-color .15s,box-shadow .15s;text-align:left;font-family:inherit;display:block;width:100%;appearance:none}
+.pcard:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(67,56,202,.1)}
+.pcard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pcard .pnum{display:inline-flex;align-items:center;justify-content:center;width:23px;height:23px;background:var(--accent-bg);color:var(--accent);border-radius:6px;font-size:11.5px;font-weight:800;margin-bottom:9px}
+.pcard h3{font-size:14.5px;font-weight:700;margin-bottom:5px;color:var(--text)}
+.pcard p{font-size:12.5px;color:var(--text2);line-height:1.55;margin-bottom:8px}
+.pcard .pstat{font-size:10.5px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+@media(max-width:760px){.preview-cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-icon">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <circle cx="6" cy="6" r="3" stroke="#FFFFFF" stroke-width="1.6"/>
+      <circle cx="6" cy="18" r="3" stroke="#FFFFFF" stroke-width="1.6"/>
+      <circle cx="18" cy="12" r="3" stroke="#FFFFFF" stroke-width="1.6"/>
+      <path d="M6 9v3a3 3 0 003 3h6" stroke="#FFFFFF" stroke-width="1.6"/>
+      <path d="M6 9v0" stroke="#FFFFFF" stroke-width="1.6"/>
+    </svg>
+  </div>
+  <div>
+    <h1>Git Branching Strategy for AI-Assisted Development</h1>
+    <p>Integration-Gate Flow · CI/CD Pipelines · Security · OpenTelemetry · Policy as Code — for Human + AI Agent Teams</p>
+  </div>
+</header>
+
+<div class="summary">
+  <h2>Integration-Gate Flow</h2>
+  <p>A Trunk-Based Development variant built for teams where AI agents and humans both open pull requests. It keeps TBD's short-lived-branch discipline and adds exactly the one thing standard TBD lacks: a supervised <code>integration</code> branch that gates every AI-generated change — with nightly integration, performance, DAST, chaos, and mutation tests — before it's release-eligible.</p>
+  <div class="stat-strip">
+    <div class="stat"><b>8</b><span>Branch Types</span></div>
+    <div class="stat"><b>9</b><span>PR Pipeline Stages</span></div>
+    <div class="stat"><b>12</b><span>Security Gates</span></div>
+    <div class="stat"><b>6</b><span>Animated Pipelines</span></div>
+    <div class="stat"><b>18</b><span>AI Guardrails</span></div>
+  </div>
+  <div class="preview-cards">
+    <button class="pcard" onclick="jumpToTab('p1')">
+      <div class="pnum">1</div>
+      <h3>Branch Architecture</h3>
+      <p>Eight branch types, why Integration-Gate Flow beats GitFlow/GitHub Flow/Trunk-Based, monorepo vs. polyrepo.</p>
+      <div class="pstat">8 Branch Types</div>
+    </button>
+    <button class="pcard" onclick="jumpToTab('p2')">
+      <div class="pnum">2</div>
+      <h3>Pipelines</h3>
+      <p>Six animated pipelines: PR review, security gates, backend release, mobile release, semver, end-to-end.</p>
+      <div class="pstat">6 Pipelines · 12 Security Gates</div>
+    </button>
+    <button class="pcard" onclick="jumpToTab('p3')">
+      <div class="pnum">3</div>
+      <h3>Hooks · Webhooks · Governance</h3>
+      <p>Client/server hooks with bypass reporting, AI guardrails, OpenTelemetry, branch protection, policies.</p>
+      <div class="pstat">18 AI Guardrails</div>
+    </button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs">
+  <div class="tab active" onclick="switchTab('p1')"><span class="tab-num">1</span> Branch Architecture</div>
+  <div class="tab" onclick="switchTab('p2')"><span class="tab-num">2</span> Pipelines</div>
+  <div class="tab" onclick="switchTab('p3')"><span class="tab-num">3</span> Hooks · Webhooks · Governance</div>
+</div>
+
+<div class="content">
+
+<!-- ══════════════════════════════════════════════════════════
+     TAB 1 — BRANCH ARCHITECTURE
+══════════════════════════════════════════════════════════ -->
+<div class="tab-panel active" id="panel-p1">
+
+  <div class="section-title">Branching Strategies Compared</div>
+  <div class="section-desc">Four real options, not two. GitFlow is too heavy for a codebase where AI agents open PRs continuously; GitHub Flow is too loose once AI-generated code needs a supervised gate before production. The strategy below, <strong>Integration-Gate Flow</strong>, is a Trunk-Based Development variant — it keeps TBD's short-lived-branch discipline and adds exactly the one thing standard TBD lacks: a supervised <code>integration</code> branch that gates AI output before it's release-eligible.</div>
+
+  <div class="card">
+    <table>
+      <tr><th>Strategy</th><th>Core Idea</th><th>Best Fit</th><th>Why (Not) Here</th></tr>
+      <tr>
+        <td>GitFlow</td>
+        <td>Long-lived <code>develop</code>, formal <code>release</code>/<code>hotfix</code> branches, scheduled merges</td>
+        <td>Shrink-wrapped software, versioned on-prem releases</td>
+        <td>Too much ceremony for continuous AI PR volume — <code>develop</code> adds a layer without adding a security gate</td>
+      </tr>
+      <tr>
+        <td>GitHub Flow</td>
+        <td><code>main</code> + short-lived feature branches, deploy on merge</td>
+        <td>Small teams, single deployable, fully trusted contributors</td>
+        <td>Too loose — no supervised space to gate AI-generated code before it's one merge from production</td>
+      </tr>
+      <tr>
+        <td>Trunk-Based Dev</td>
+        <td>Everyone commits to trunk; feature flags hide incomplete work</td>
+        <td>High-maturity teams with strong test coverage and flag infrastructure</td>
+        <td>The direct ancestor of Integration-Gate Flow below — but leans on flags instead of a reviewed branch to contain AI output, and has no dedicated slot for nightly integration/DAST/chaos runs</td>
+      </tr>
+      <tr>
+        <td>Integration-Gate Flow</td>
+        <td>Trunk-Based Development, plus one supervised <code>integration</code> branch as a review-and-test buffer</td>
+        <td>Multi-surface teams (UI/backend/frontend/mobile) mixing AI agents and humans</td>
+        <td><strong>Selected</strong> — the minimum structure that gives AI output a gated holding area with nightly integration/perf/DAST/chaos/mutation tests, without GitFlow's <code>develop</code>/<code>release</code> ceremony</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section-desc" style="margin-top:20px;margin-bottom:8px">Three properties Integration-Gate Flow specifically buys for AI-assisted development:</div>
+  <div class="grid-3">
+    <div class="card">
+      <h3>Multiple AI Agents + Humans</h3>
+      <p>Every AI agent owns its own <code>ai/&lt;feature&gt;</code> branch. Agents never touch <code>main</code>, <code>release/*</code>, or <code>integration</code> directly — they can only propose a PR.</p>
+    </div>
+    <div class="card">
+      <h3>Release Traceability</h3>
+      <p>Every artifact that reaches <code>main</code> is squash-merged, signed, tagged, and shipped with an SBOM and attestation — any production commit maps 1:1 to a PR, a set of scans, and a build.</p>
+    </div>
+    <div class="card">
+      <h3>Fast Rollback</h3>
+      <p>Squash-only history on <code>main</code> plus immutable, signed, tagged release images means rollback is <code>kubectl rollout undo</code> or re-deploying the previous signed tag — never a revert-and-pray.</p>
+    </div>
+  </div>
+
+  <div class="section-title">The Branch Model</div>
+  <div class="section-desc">Eight branch types, one direction of promotion. Features, AI-generated code, and bug fixes flow <em>up</em> through <code>integration</code> → <code>release/*</code> → <code>main</code>. <code>hotfix/*</code> is the one branch allowed to move sideways into all three protected branches at once. <code>experiment/*</code> never merges — it exists purely to be cherry-picked from.</div>
+
+  <div class="diagram">
+    <div class="diagram-title">Branch topology — animated</div>
+    <svg id="svg-tree" viewBox="0 0 960 460" aria-label="Branch topology diagram">
+      <defs>
+        <marker id="arrIndigo" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><polygon points="0 0,9 4,0 8" fill="#8C94E8"/></marker>
+        <marker id="arrRed" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><polygon points="0 0,9 4,0 8" fill="#E38A82"/></marker>
+      </defs>
+
+      <!-- ── connector paths ── -->
+      <path id="bt-p1" d="M200,126 L200,79" fill="none" stroke="#8C94E8" stroke-width="1.75" opacity=".9" marker-end="url(#arrIndigo)"/>
+      <path id="bt-p2" d="M200,221 L200,174" fill="none" stroke="#8C94E8" stroke-width="1.75" opacity=".9" marker-end="url(#arrIndigo)"/>
+      <path d="M140,356 L140,310" fill="none" stroke="#C7CBF0" stroke-width="1.75"/>
+      <path d="M370,356 L370,310" fill="none" stroke="#C7CBF0" stroke-width="1.75"/>
+      <path d="M600,356 L600,310" fill="none" stroke="#C7CBF0" stroke-width="1.75"/>
+      <path d="M140,310 L600,310" fill="none" stroke="#C7CBF0" stroke-width="1.75"/>
+      <path id="bt-p7" d="M200,310 L200,269" fill="none" stroke="#8C94E8" stroke-width="1.75" opacity=".9" marker-end="url(#arrIndigo)"/>
+      <path id="bt-p8" d="M300,55 L830,55 L830,126" fill="none" stroke="#E38A82" stroke-width="1.75" opacity=".9" marker-end="url(#arrRed)"/>
+      <path d="M745,150 L300,150" fill="none" stroke="#E38A82" stroke-width="1.75" opacity=".9" marker-end="url(#arrRed)"/>
+      <path id="bt-p10" d="M830,174 L830,245 L310,245" fill="none" stroke="#E38A82" stroke-width="1.75" opacity=".9" marker-end="url(#arrRed)"/>
+      <path d="M745,320 L655,320" fill="none" stroke="#A8A29E" stroke-width="1.75" stroke-dasharray="4 3" opacity=".85"/>
+      <circle cx="655" cy="320" r="3.5" fill="#A8A29E"/>
+      <text x="700" y="337" text-anchor="middle" font-size="12" font-weight="600" fill="#4B5563">cherry-pick only</text>
+
+      <!-- flow dots -->
+      <circle r="3.3" fill="#6B74D6"><animateMotion dur="2.4s" repeatCount="indefinite" path="M200,126 L200,79"/></circle>
+      <circle r="3.3" fill="#6B74D6"><animateMotion dur="2.4s" begin=".8s" repeatCount="indefinite" path="M200,221 L200,174"/></circle>
+      <circle r="3.3" fill="#6B74D6"><animateMotion dur="2.4s" begin="1.6s" repeatCount="indefinite" path="M200,310 L200,269"/></circle>
+      <circle r="3.3" fill="#D46A60"><animateMotion dur="3s" repeatCount="indefinite" path="M300,55 L830,55 L830,126"/></circle>
+      <circle r="3.3" fill="#D46A60"><animateMotion dur="3s" begin="1.5s" repeatCount="indefinite" path="M830,174 L830,245 L310,245"/></circle>
+
+      <!-- radar ping on integration hub -->
+      <circle cx="200" cy="245" r="118" fill="none" stroke="#8C94E8" stroke-width="1.5" opacity=".35">
+        <animate attributeName="r" values="112;150" dur="2.4s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values=".35;0" dur="2.4s" repeatCount="indefinite"/>
+      </circle>
+
+      <!-- main -->
+      <rect x="100" y="31" width="200" height="48" rx="10" fill="#EEF4FF" stroke="#B9D2FA" stroke-width="1.75"/>
+      <circle cx="286" cy="45" r="4" fill="#2451C4"/>
+      <text x="200" y="51" text-anchor="middle" font-size="13" font-weight="700" fill="#111827">main</text>
+      <text x="200" y="67" text-anchor="middle" font-size="12" font-weight="500" fill="#4B5563">Production Only</text>
+
+      <!-- release -->
+      <rect x="100" y="126" width="200" height="48" rx="10" fill="#F4F1FE" stroke="#D2C7F7" stroke-width="1.75"/>
+      <circle cx="286" cy="140" r="4" fill="#6B3FD1"/>
+      <text x="200" y="146" text-anchor="middle" font-size="13" font-weight="700" fill="#111827">release/vX.Y</text>
+      <text x="200" y="163" text-anchor="middle" font-size="12" font-weight="500" fill="#4B5563">UAT · Regression · Security</text>
+
+      <!-- integration (hub, dark emphasis) -->
+      <rect x="90" y="221" width="220" height="48" rx="10" fill="#1E1B3A" stroke="#8C94E8" stroke-width="2"/>
+      <text x="200" y="241" text-anchor="middle" font-size="13" font-weight="700" fill="#F9FAFB">integration</text>
+      <text x="200" y="258" text-anchor="middle" font-size="12" font-weight="500" fill="#C7CBF0">AI + Human Playground</text>
+
+      <!-- ai -->
+      <rect x="55" y="356" width="170" height="48" rx="10" fill="#EFF9FF" stroke="#A9DEF5" stroke-width="1.75"/>
+      <circle cx="211" cy="370" r="4" fill="#0B7AA8"/>
+      <text x="140" y="376" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">ai/&lt;feature&gt;</text>
+      <text x="140" y="393" text-anchor="middle" font-size="12" font-weight="500" fill="#4B5563">AI Agent Owned</text>
+
+      <!-- feature -->
+      <rect x="285" y="356" width="170" height="48" rx="10" fill="#EFFBF3" stroke="#A9E4C1" stroke-width="1.75"/>
+      <circle cx="441" cy="370" r="4" fill="#157A47"/>
+      <text x="370" y="376" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">feature/&lt;jira&gt;</text>
+      <text x="370" y="393" text-anchor="middle" font-size="12" font-weight="500" fill="#4B5563">Human Feature Work</text>
+
+      <!-- bugfix -->
+      <rect x="515" y="356" width="170" height="48" rx="10" fill="#FEF7EC" stroke="#F3D18F" stroke-width="1.75"/>
+      <circle cx="671" cy="370" r="4" fill="#9A5B0A"/>
+      <text x="600" y="376" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">bugfix/&lt;jira&gt;</text>
+      <text x="600" y="393" text-anchor="middle" font-size="12" font-weight="500" fill="#4B5563">Human Bug Fix</text>
+
+      <!-- hotfix -->
+      <rect x="745" y="126" width="170" height="48" rx="10" fill="#FDF0EF" stroke="#F0AEA8" stroke-width="1.75"/>
+      <circle cx="901" cy="140" r="4" fill="#A5372F"/>
+      <text x="830" y="146" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">hotfix/&lt;jira&gt;</text>
+      <text x="830" y="163" text-anchor="middle" font-size="12" font-weight="500" fill="#4B5563">Emergency Patch</text>
+
+      <!-- experiment (dashed) -->
+      <rect x="745" y="296" width="170" height="48" rx="10" fill="#F7F6F4" stroke="#D3CFC8" stroke-width="1.75" stroke-dasharray="6 3"/>
+      <circle cx="901" cy="310" r="4" fill="#78716C"/>
+      <text x="830" y="316" text-anchor="middle" font-size="12.5" font-weight="700" fill="#374151">experiment/&lt;topic&gt;</text>
+      <text x="830" y="333" text-anchor="middle" font-size="12" font-weight="500" fill="#4B5563">No Guarantees</text>
+    </svg>
+    <div class="diagram-legend">
+      <div class="leg"><span class="leg-dot" style="background:#6B74D6"></span>Promotion Path (Feature → Integration → Release → Main)</div>
+      <div class="leg"><span class="leg-dot" style="background:#D46A60"></span>Hotfix — Created From Main, Synced To All Three</div>
+      <div class="leg"><span class="leg-dot" style="background:#A8A29E"></span>Experiment — Cherry-Pick Only, Never Merged</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="branch-card" style="border-left-color:var(--pd-main)">
+      <div class="bname">main</div>
+      <div class="bdesc">Production only. The single source of truth for what is running live.</div>
+      <div class="brow"><b>Merges from:</b><span>release/*, hotfix/*</span></div>
+      <div class="brow"><b>Protection:</b><span>Signed commits, CODEOWNERS, no force-push, no merge commits, squash only</span></div>
+      <div class="brow"><b>On every merge:</b><span>Tag release · attach SBOM · attach attestations</span></div>
+    </div>
+    <div class="branch-card" style="border-left-color:var(--pd-release)">
+      <div class="bname">release/vX.Y</div>
+      <div class="bdesc">Cut from integration for UAT, regression, and security validation.</div>
+      <div class="brow"><b>Merges from:</b><span>integration, hotfix/*</span></div>
+      <div class="brow"><b>Merges to:</b><span>main</span></div>
+      <div class="brow"><b>Rule:</b><span>No new features — bug fixes only</span></div>
+    </div>
+    <div class="branch-card" style="border-left-color:var(--ps-integration)">
+      <div class="bname">integration</div>
+      <div class="bdesc">The AI playground. Every UI, backend, frontend, mobile, and AI-generated PR lands here first.</div>
+      <div class="brow"><b>Merges from:</b><span>feature/*, ai/*, bugfix/*, hotfix/*</span></div>
+      <div class="brow"><b>Nightly:</b><span>Integration tests · performance · DAST · chaos · mutation tests</span></div>
+    </div>
+    <div class="branch-card" style="border-left-color:var(--pd-ai)">
+      <div class="bname">ai/&lt;feature&gt;</div>
+      <div class="bdesc">Owned by AI agents — e.g. <code>ai/refactor-payment</code>, <code>ai/new-ui</code>, <code>ai/improve-auth</code>, <code>ai/graphql</code>, <code>ai/optimize-api</code>.</div>
+      <div class="brow"><b>Rule:</b><span>Cannot merge directly — requires AI Review + Human Review + Security Review + passing tests</span></div>
+    </div>
+    <div class="branch-card" style="border-left-color:var(--pd-feature)">
+      <div class="bname">feature/&lt;jira&gt;</div>
+      <div class="bdesc">One feature per branch. Deleted immediately after merge.</div>
+      <div class="brow"><b>Merges to:</b><span>integration</span></div>
+    </div>
+    <div class="branch-card" style="border-left-color:var(--pd-bugfix)">
+      <div class="bname">bugfix/&lt;jira&gt;</div>
+      <div class="bdesc">Standard bug fix tied to a ticket, same review path as feature/*.</div>
+      <div class="brow"><b>Merges to:</b><span>integration</span></div>
+    </div>
+    <div class="branch-card" style="border-left-color:var(--pd-hotfix)">
+      <div class="bname">hotfix/&lt;jira&gt;</div>
+      <div class="bdesc">Emergency production patch — the one branch allowed to move sideways.</div>
+      <div class="brow"><b>Created from:</b><span>main</span></div>
+      <div class="brow"><b>Merges into:</b><span>main, release/*, integration</span></div>
+    </div>
+    <div class="branch-card" style="border-left-color:var(--pd-experiment)">
+      <div class="bname">experiment/&lt;topic&gt;</div>
+      <div class="bdesc">Spikes and prototypes — e.g. <code>experiment/langgraph</code>, <code>experiment/new-cache</code>, <code>experiment/ollama</code>.</div>
+      <div class="brow"><b>Rule:</b><span>No guarantees. Never merged directly. Cherry-pick only.</span></div>
+    </div>
+  </div>
+
+  <div class="alert alert-red"><strong>Never allowed:</strong> direct commits to <code>main</code>, <code>release/*</code>, or <code>integration</code> — under any circumstances, by any human or agent. Every change enters through a pull request.</div>
+
+  <div class="section-title">Repository Layout</div>
+  <div class="section-desc">One repo, one graph, clear ownership per surface. Security, telemetry, and infra live as first-class top-level directories — not bolted on inside each app.</div>
+  <div class="card">
+    <pre><span class="f">repo/</span>
+├── <span class="f">ui/</span>              <span class="c"># design system + shared components</span>
+├── <span class="f">backend/</span>         <span class="c"># services, APIs, workers</span>
+├── <span class="f">frontend/</span>        <span class="c"># web application</span>
+├── <span class="f">mobile/</span>          <span class="c"># iOS + Android apps</span>
+├── <span class="f">shared/</span>          <span class="c"># cross-surface types, utils, constants</span>
+├── <span class="f">terraform/</span>       <span class="c"># cloud infrastructure as code</span>
+├── <span class="f">helm/</span>            <span class="c"># kubernetes helm charts</span>
+├── <span class="f">k8s/</span>             <span class="c"># raw manifests, kustomize overlays</span>
+├── <span class="f">.github/</span>         <span class="c"># workflows, CODEOWNERS, PR/issue templates</span>
+├── <span class="f">otel/</span>            <span class="c"># collector config, dashboards, alert rules</span>
+├── <span class="f">security/</span>        <span class="c"># OPA/Kyverno policies, scan configs</span>
+├── <span class="f">docs/</span>            <span class="c"># architecture docs, ADRs</span>
+├── <span class="f">scripts/</span>         <span class="c"># unified CLI entry point</span>
+├── <span class="f">api/</span>             <span class="c"># OpenAPI specs</span>
+└── <span class="f">protobuf/</span>        <span class="c"># gRPC/proto contracts</span></pre>
+  </div>
+
+  <div class="section-title">Monorepo vs. Polyrepo</div>
+  <div class="section-desc">The layout above is a monorepo — <code>ui/</code>, <code>backend/</code>, <code>frontend/</code>, and <code>mobile/</code> all live in one repository, one <code>integration</code> branch, one set of branch-protection rules. That's a deliberate choice, not a default.</div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>Monorepo — Selected</h2>
+      <p><strong>Buys:</strong> one PR can touch <code>shared/</code>, <code>backend/</code>, and <code>frontend/</code> atomically — no cross-repo version pinning when an API contract changes. One CODEOWNERS file, one security pipeline, one OTel/policy config to keep current instead of four. An AI agent refactoring an API and its three callers does it in a single reviewable PR.</p>
+      <p><strong>Costs:</strong> CI must be scoped by path filters (see the Terraform/Helm hooks) or every PR triggers every pipeline. Requires a build system that understands partial builds (Nx/Turborepo/Bazel-style) once the repo gets large.</p>
+    </div>
+    <div class="card">
+      <h2>Polyrepo — Rejected Here</h2>
+      <p><strong>Buys:</strong> hard isolation — a mobile team can't accidentally break the backend build. Independent release cadences and independent access control per repo out of the box.</p>
+      <p><strong>Costs:</strong> a cross-surface change becomes N coordinated PRs across N repos, each needing its own review and its own security pipeline run. For a small set of AI agents already producing a high PR volume, that multiplies the exact review load this branch model exists to control — and CODEOWNERS, OTel config, and policy rules must be kept in sync by hand across every repo.</p>
+    </div>
+  </div>
+
+  <div class="alert alert-info"><strong>Why monorepo wins here:</strong> the AI-guardrail and security-gate machinery in this guide has to be configured and kept current exactly once. Polyrepo would mean replicating branch protection, CODEOWNERS, the security pipeline, and the OTel requirements across every surface's repo — more places for the gate to silently drift out of sync, which is the one failure mode Integration-Gate Flow is built to prevent.</div>
+
+  <div class="section-title">Branch Naming &amp; Commit Convention</div>
+  <div class="section-desc">Naming carries information the tooling depends on — the pre-push hook, the CI pipeline, and the changelog generator all parse these patterns.</div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>Branch Naming</h2>
+      <table>
+        <tr><th>Pattern</th><th>Example</th></tr>
+        <tr><td>feature/JIRA-desc</td><td>feature/ABC-145-login</td></tr>
+        <tr><td>bugfix/JIRA-desc</td><td>bugfix/ABC-240-payment</td></tr>
+        <tr><td>hotfix/JIRA-desc</td><td>hotfix/ABC-520-search</td></tr>
+        <tr><td>release/vX.Y</td><td>release/v1.4</td></tr>
+        <tr><td>ai/description</td><td>ai/refactor-cache</td></tr>
+        <tr><td>experiment/topic</td><td>experiment/new-ui</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h2>Conventional Commits</h2>
+      <table>
+        <tr><th>Prefix</th><th>Example</th></tr>
+        <tr><td>feat:</td><td>feat(auth): add OAuth login</td></tr>
+        <tr><td>fix:</td><td>fix(cart): correct tax rounding</td></tr>
+        <tr><td>perf:</td><td>perf(api): cache user lookups</td></tr>
+        <tr><td>security:</td><td>security(api): validate JWT</td></tr>
+        <tr><td>refactor:</td><td>refactor(ui): extract Button</td></tr>
+        <tr><td>docs:</td><td>docs(readme): update setup</td></tr>
+        <tr><td>build:</td><td>build(deps): bump pnpm lock</td></tr>
+        <tr><td>ci:</td><td>ci(workflow): add SBOM step</td></tr>
+        <tr><td>test:</td><td>test(payments): add contract test</td></tr>
+        <tr><td>otel:</td><td>otel(api): add payment span</td></tr>
+        <tr><td>ai:</td><td>ai(ui): generated dashboard</td></tr>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     TAB 2 — PIPELINES (all six, one flowing narrative)
+══════════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="panel-p2">
+
+  <div class="section-title">Pipeline Overview</div>
+  <div class="section-desc">Six pipelines, one per moment in a change's life — from a PR being opened to a signed tag running in production. They used to be split across tabs; they're grouped here in the order a change actually passes through them: <strong>PR review → security gates → backend release → mobile release → semantic versioning → the end-to-end picture.</strong></div>
+
+  <div class="section-title">1 · The PR Pipeline</div>
+  <div class="section-desc">Every change — human or AI — travels the same nine-stage path before it can land on <code>integration</code>. Nothing skips a stage; there is no "trusted author" bypass, including for AI agents.</div>
+
+  <div class="diagram">
+    <div class="diagram-title">Developer / agent to merge — animated</div>
+    <svg id="svg-pr" viewBox="0 0 0 0" aria-label="PR pipeline diagram"></svg>
+  </div>
+
+  <div class="section-title">2 · Security Pipeline</div>
+  <div class="section-desc">Twelve gates between a commit and a running, monitored container. Any one of them failing blocks the deploy — there is no override that isn't logged and reviewed.</div>
+
+  <div class="diagram">
+    <div class="diagram-title">Secrets to deploy — animated</div>
+    <svg id="svg-sec" viewBox="0 0 0 0" aria-label="Security pipeline diagram"></svg>
+  </div>
+
+  <div class="card">
+    <h2>Security Tooling — Open Source vs. Enterprise</h2>
+    <p>Every gate has a default. Where the org licenses a commercial platform, it slots into the same gate rather than adding a new one. <code>SCA</code> below covers open-source component analysis (dependency/license risk, sometimes shortened "OSA").</p>
+    <table>
+      <tr><th>Security Gate</th><th>Tool Options</th></tr>
+      <tr><td>SAST</td><td><span class="tag tag-oss">OSS</span>Semgrep, CodeQL&nbsp; &nbsp;<span class="tag tag-ent">Enterprise</span>SonarQube</td></tr>
+      <tr><td>Code Coverage</td><td><span class="tag tag-ent">Enterprise</span>SonarQube&nbsp; &nbsp;<span class="tag tag-oss">OSS</span>coverage.py / JaCoCo / Istanbul</td></tr>
+      <tr><td>SCA / Dependency (OSA)</td><td><span class="tag tag-oss">OSS</span>Grype, OWASP Dependency-Check&nbsp; &nbsp;<span class="tag tag-ent">Enterprise</span>Prisma Cloud</td></tr>
+      <tr><td>IaC / Config Scan</td><td><span class="tag tag-oss">OSS</span>tflint&nbsp; &nbsp;<span class="tag tag-ent">Enterprise</span>Checkmarx</td></tr>
+      <tr><td>Container / Image Scan</td><td><span class="tag tag-oss">OSS</span>Clair&nbsp; &nbsp;<span class="tag tag-ent">Enterprise</span>Prisma Cloud</td></tr>
+      <tr><td>SBOM</td><td><span class="tag tag-ent">Enterprise</span>Checkmarx</td></tr>
+      <tr><td>Image Signing</td><td><span class="tag tag-oss">OSS</span>Cosign (Sigstore)</td></tr>
+      <tr><td>Image Registry</td><td><span class="tag tag-oss">OSS</span>Quay (self-hosted)&nbsp; &nbsp;<span class="tag tag-ent">Enterprise</span>Red Hat Quay, Quay.io</td></tr>
+      <tr><td>K8s Admission Enforcement</td><td><span class="tag tag-oss">OSS</span>Kyverno, OPA / Conftest</td></tr>
+      <tr><td>Runtime Protection (Backend)</td><td><span class="tag tag-oss">OSS</span>Falco&nbsp; &nbsp;<span class="tag tag-ent">Enterprise</span>Prisma Cloud (Defender)</td></tr>
+      <tr><td>Runtime Protection (Mobile / RASP)</td><td><span class="tag tag-ent">Enterprise</span>Appdome, Guardsquare, Promon</td></tr>
+    </table>
+  </div>
+
+  <div class="section-title">3 · Backend &amp; Web Release Pipeline</div>
+  <div class="section-desc">Seventeen stages from a merged PR to a verified production rollout, for every surface that ships as a container — backend services and the containerized web frontend. <code>Approval</code> is the one manual human gate in the entire chain — everything before and after it is automated.</div>
+
+  <div class="diagram">
+    <div class="diagram-title">Merge to production, with post-deployment verification — animated</div>
+    <svg id="svg-rel" viewBox="0 0 0 0" aria-label="Backend release pipeline diagram"></svg>
+  </div>
+
+  <div class="card">
+    <h2>Helm Release Hooks — Not the Same Thing as <code>helm-ci</code></h2>
+    <p>The <code>helm-ci</code> check in Tab 3 lints the chart at PR time. Helm's own <strong>release hooks</strong> are a separate, native mechanism — Kubernetes Jobs annotated <code>helm.sh/hook: ...</code> that run at deploy time, when <code>helm install</code>/<code>upgrade</code> actually executes against the cluster. They slot directly into the stages already shown above.</p>
+    <table>
+      <tr><th>Hook</th><th>Typical Job</th><th>Maps to Pipeline Stage</th></tr>
+      <tr><td>pre-install / pre-upgrade</td><td>DB schema migration, config validation</td><td>Runs before <code>Deploy Dev</code> / <code>Deploy QA</code> / <code>Production</code> — a failure here aborts the release, nothing new is applied</td></tr>
+      <tr><td>post-install / post-upgrade</td><td>Smoke-test Job, Slack/webhook notification</td><td><code>Smoke</code></td></tr>
+      <tr><td>test</td><td><code>helm test</code> Job, run on demand post-deploy</td><td><code>Integration</code> / <code>Post-Deploy</code></td></tr>
+      <tr><td>pre-rollback / post-rollback</td><td>State snapshot, post-rollback verification</td><td>Fires automatically on <code>helm rollback</code> — the "Fast Rollback" path from Tab 1</td></tr>
+      <tr><td>pre-delete / post-delete</td><td>Backup Job, external resource cleanup (DNS, LB)</td><td>Decommissioning — outside the normal promotion path</td></tr>
+    </table>
+    <p style="margin-top:12px"><strong>Failure policy:</strong> if a <code>pre-*</code> hook Job fails, Helm halts before touching any release resources — the same fail-closed guarantee the rest of this pipeline relies on. Hook ordering within a phase is controlled by <code>helm.sh/hook-weight</code>; cleanup of one-shot hook Jobs is controlled by <code>helm.sh/hook-delete-policy</code>.</p>
+  </div>
+
+  <div class="section-title">4 · Mobile Release Pipeline — Android &amp; iOS</div>
+  <div class="section-desc">The "frontend" delivery pipeline for the two app-store surfaces. It shares the same PR-review and CI gates as everything else, but diverges after that — there's no Kubernetes canary for a mobile app; there's a device farm, a store review queue, an in-app runtime guard, and a phased rollout instead.</div>
+
+  <div class="diagram">
+    <div class="diagram-title">Merge to app store, with real-device testing and in-app protection — animated</div>
+    <svg id="svg-mobile" viewBox="0 0 0 0" aria-label="Mobile release pipeline diagram"></svg>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>Build &amp; Test</h2>
+      <ul class="checklist">
+        <li>Android built via Gradle, iOS via Xcode / Fastlane</li>
+        <li>Unit + UI tests run per platform (Espresso, XCUITest)</li>
+        <li>Real-device regression on HeadSpin's device farm — actual hardware, not just emulators/simulators</li>
+        <li>Beta build pushed to TestFlight (iOS) and the Play Console internal/closed track (Android)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>Ship &amp; Protect</h2>
+      <ul class="checklist">
+        <li>QA sign-off is the human gate — same role as <code>Approval</code> in the backend pipeline</li>
+        <li>Submitted to App Store Connect and the Google Play Console</li>
+        <li>Store review queue is outside our control — build time budgets for it</li>
+        <li>RASP (Runtime Application Self-Protection) SDK embedded at build time — guards the live app against tampering, rooting/jailbreak, and hooking frameworks post-install</li>
+        <li>Phased/staged rollout percentage in both stores before 100%</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section-title">5 · Semantic Versioning &amp; Automated Release Notes</div>
+  <div class="section-desc">The version number and the changelog are both <em>computed</em>, not written by hand. Both are derived from the same input the <code>commit-msg</code> hook already enforces: Conventional Commits.</div>
+
+  <div class="alert alert-warn"><strong>Semver does not roll over at 99.</strong> MAJOR, MINOR, and PATCH are each an independent, uncapped integer — there is no odometer digit limit. <code>1.1.99</code> followed by another <code>fix:</code> commit is <code>1.1.100</code>, not <code>1.2.0</code>. A segment only resets to zero when a <em>higher</em> segment increments: a <code>feat:</code> resets PATCH; a breaking change resets MINOR and PATCH.</div>
+
+  <div class="card">
+    <h2>Bump Rule — Highest-Precedence Commit Since the Last Tag Wins</h2>
+    <table>
+      <tr><th>Commits Since Last Tag</th><th>Bump</th><th>Example</th></tr>
+      <tr><td>Any <code>BREAKING CHANGE:</code> footer, or a <code>type!</code></td><td>Major — resets MINOR + PATCH</td><td>1.1.99 → 2.0.0</td></tr>
+      <tr><td>At least one <code>feat:</code>, no breaking change</td><td>Minor — resets PATCH</td><td>1.1.99 → 1.2.0</td></tr>
+      <tr><td>Only <code>fix:</code> / <code>perf:</code> / <code>security:</code></td><td>Patch</td><td>1.1.99 → 1.1.100</td></tr>
+      <tr><td>Only <code>docs:</code> / <code>build:</code> / <code>ci:</code> / <code>test:</code> / <code>refactor:</code> / <code>otel:</code> / <code>ai:</code></td><td>No release cut</td><td>1.1.99 stays 1.1.99</td></tr>
+    </table>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">Commit to signed, versioned tag — animated</div>
+    <svg id="svg-semver" viewBox="0 0 0 0" aria-label="Semantic versioning pipeline"></svg>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>Release-PR Model — Recommended</h2>
+      <p><code>release-please</code> maintains a standing, auto-updated "Release PR" that accumulates the version bump and changelog as commits land on <code>release/*</code>. Nothing is tagged until that PR is merged.</p>
+      <p>This fits the model directly — the Release PR <em>is</em> the "Approval" human gate already in the release pipeline. Merging it is what triggers tag, sign, and attest.</p>
+    </div>
+    <div class="card">
+      <h2>Continuous Model — Alternative</h2>
+      <p><code>semantic-release</code> computes the bump and publishes a tag on every merge to <code>release/*</code>, with no pause for review. Faster, but removes the human checkpoint — only appropriate if <code>release/*</code> is already fully covered by the required reviews in the branch-protection table.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Changelog Section Mapping</h2>
+    <p>Only <code>feat</code>, <code>fix</code>, and <code>perf</code> exist in the default Angular commit preset most release tools ship with. <code>security</code>, <code>otel</code>, and <code>ai</code> are all custom to this convention and need an explicit type map in <code>.release-please-config.json</code> / <code>.releaserc</code> — without it, commits using those three prefixes are silently dropped from the notes.</p>
+    <table>
+      <tr><th>Prefix</th><th>Changelog Section</th></tr>
+      <tr><td>feat:</td><td>Features</td></tr>
+      <tr><td>fix:</td><td>Bug Fixes</td></tr>
+      <tr><td>perf:</td><td>Performance</td></tr>
+      <tr><td>security:</td><td>Security</td></tr>
+      <tr><td>ai:</td><td>AI-Generated Changes</td></tr>
+      <tr><td>otel:</td><td>Observability</td></tr>
+      <tr><td>refactor: / docs: / build: / ci: / test:</td><td>Hidden from notes (internal only)</td></tr>
+    </table>
+  </div>
+
+  <div class="alert alert-green"><strong>Enforcement lever:</strong> there is no separate release-notes check to pass or fail — <code>commit-msg</code> is the enforcement point. A commit that doesn't match Conventional Commits never lands, so a malformed or missing changelog entry is structurally impossible, not just discouraged.</div>
+
+  <div class="section-title">6 · Recommended End-to-End Flow</div>
+  <div class="section-desc">Every pipeline above, in one path — from a developer or an AI agent opening a branch, to a verified rollout on <code>main</code>.</div>
+
+  <div class="diagram">
+    <div class="diagram-title">Developer / AI agent to production — animated</div>
+    <svg id="svg-e2e" viewBox="0 0 0 0" aria-label="End to end flow diagram"></svg>
+  </div>
+
+  <div class="alert alert-info">Integration-Gate Flow scales across UI, backend, frontend, mobile, and AI-assisted development while enforcing security, observability, provenance, and release governance at every stage — the same nine PR-pipeline stages and twelve security gates apply regardless of which surface the change touches.</div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     TAB 3 — HOOKS · WEBHOOKS · GOVERNANCE
+══════════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="panel-p3">
+
+  <div class="section-title">Git Hooks</div>
+  <div class="section-desc">Two groups: hooks that run on the laptop or agent sandbox before code ever leaves it, and hooks that run server-side in CI once a PR is open. <code>git commit</code> runs <code>pre-commit</code> → <code>commit-msg</code> → <code>post-commit</code> in that order; <code>git push</code> is a separate command that later runs <code>pre-push</code>.</div>
+
+  <div class="alert alert-info"><strong>Local hooks are fast feedback, not the enforcement boundary.</strong> Every local check below has a required-status-check twin in CI. Skipping a local hook — deliberately with <code>--no-verify</code>, or because a tool isn't installed — just means finding out at the PR instead of on the laptop. Nothing reaches <code>main</code> without the CI-side check passing regardless of what ran locally.</div>
+
+  <div class="group-label">Client-Side Hooks — Run Locally</div>
+  <div class="grid-2">
+    <div class="card hook-card">
+      <h2>pre-commit</h2>
+      <div class="brow"><b>Purpose:</b><span>Formatting, linting, secret scan, IaC scan, Helm lint, Terraform validate, unit tests, license check, SBOM generation, branch naming convention — the cheapest place to catch a problem, before it becomes a CI minute.</span></div>
+      <div class="brow"><b>If not applicable:</b><span>Each file-scoped sub-check no-ops rather than failing — e.g. no <code>.tf</code> staged skips <code>terraform fmt</code>/<code>validate</code> entirely. Branch naming is the exception: like <code>commit-msg</code>, it always applies — every commit happens on some branch, checked against the <a href="#" onclick="jumpToTab('p1');return false" style="color:inherit;text-decoration:underline">naming patterns in Tab 1</a>.</span></div>
+      <div class="brow"><b>Bypass reporting:</b><span><code>git commit --no-verify</code> skips this hook silently on the laptop, but every one of these checks re-runs as a required CI status check on the PR — a bypassed commit fails later, not never.</span></div>
+      <div class="chips" style="margin-top:12px">
+        <span class="chip">pre-commit</span><span class="chip">gitleaks</span><span class="chip">trufflehog</span>
+        <span class="chip">terraform fmt</span><span class="chip">terraform validate</span><span class="chip">tflint</span>
+        <span class="chip">checkmarx</span><span class="chip">helm lint</span><span class="chip">yamllint</span>
+        <span class="chip">eslint</span><span class="chip">ruff</span><span class="chip">golangci-lint</span>
+        <span class="chip">spotless</span><span class="chip">ktlint</span><span class="chip">swiftlint</span>
+      </div>
+    </div>
+    <div class="card hook-card">
+      <h2>commit-msg</h2>
+      <div class="brow"><b>Purpose:</b><span>Verifies Conventional Commits format, JIRA ticket ID present, Signed-off-by trailer present, no forbidden words, message length within limits.</span></div>
+      <div class="brow"><b>If not applicable:</b><span>Never — every commit has a message, so this hook always runs in full.</span></div>
+      <div class="brow"><b>Bypass reporting:</b><span>Same <code>--no-verify</code> path skips it locally; CI independently re-validates the message format of every commit in the PR before merge is allowed.</span></div>
+    </div>
+    <div class="card hook-card">
+      <h2>post-commit</h2>
+      <div class="brow"><b>Purpose:</b><span>Draft changelog entry appended locally, desktop/Slack notification to the author, SBOM cache refresh, ticket-status ping (e.g. move JIRA to "In Progress").</span></div>
+      <div class="brow"><b>If not applicable:</b><span>Never skipped by design, but non-blocking — if a sub-step fails (e.g. Slack API down), the commit still stands.</span></div>
+      <div class="brow"><b>Bypass reporting:</b><span><em>Not applicable</em> — this hook never gates, so there's nothing to bypass. A failed step is written to a local <code>.git/hooks.log</code>, nothing more.</span></div>
+    </div>
+    <div class="card hook-card">
+      <h2>pre-push</h2>
+      <div class="brow"><b>Purpose:</b><span>Unit tests, API contract tests, OpenAPI validation, proto validation, dependency check, SAST — the last local check before code leaves the machine.</span></div>
+      <div class="brow"><b>If not applicable:</b><span>Contract/proto validation skips if no <code>.proto</code> or <code>api/*.yaml</code> files changed in the pushed commits.</span></div>
+      <div class="brow"><b>Bypass reporting:</b><span><code>git push --no-verify</code> skips it locally; the identical test/contract/SAST suite re-runs as a required CI check before the PR can merge.</span></div>
+    </div>
+  </div>
+
+  <div class="group-label">Server-Side Hooks — Run in CI</div>
+  <div class="grid-2">
+    <div class="card hook-card">
+      <h2>terraform/** → terraform-ci</h2>
+      <div class="brow"><b>Purpose:</b><span>terraform fmt -check, terraform validate, tflint, Checkmarx policy scan, terraform plan posted as a PR comment, Infracost estimate posted as a PR comment, nightly drift detection against live state.</span></div>
+      <div class="brow"><b>If not applicable:</b><span>PR doesn't touch <code>terraform/**</code> — the job still runs and reports a "skipped, no changes" <strong>success</strong>, not an absent check, so this required status check never gets stuck pending.</span></div>
+      <div class="brow"><b>Bypass reporting:</b><span>Nothing to bypass server-side — every run (pass, fail, or skipped) is a GitHub check run, permanently visible in the PR's Checks tab and Actions history.</span></div>
+    </div>
+    <div class="card hook-card">
+      <h2>helm/** → helm-ci</h2>
+      <div class="brow"><b>Purpose:</b><span>helm lint, helm template + kubeconform schema validation, Conftest/OPA policy test against rendered manifests, Chart.yaml version bump check, kube-score / Prisma Cloud config scan on rendered output.</span></div>
+      <div class="brow"><b>If not applicable:</b><span>PR doesn't touch <code>helm/**</code> — same skip-as-success pattern as terraform-ci.</span></div>
+      <div class="brow"><b>Bypass reporting:</b><span>Same — logged as a GitHub check run, nothing hidden or silently absent.</span></div>
+    </div>
+  </div>
+
+  <div class="alert alert-warn"><strong>Catching <code>--no-verify</code> proactively:</strong> <code>pre-commit</code> and <code>pre-push</code> both emit a heartbeat event to the OTel Collector when they actually run. If a push reaches the GitHub webhook without a matching heartbeat for that commit SHA, CI posts a non-blocking PR comment flagging a likely local-hook bypass — informational only, since the required status checks above already prevent anything bypassed from reaching <code>main</code>.</div>
+
+  <div class="section-title">GitHub Webhooks</div>
+  <div class="section-desc">Every branch-protected event fans out to the systems that need to react to it — build, deploy, alert, or record.</div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>Webhook Events</h2>
+      <div class="chips">
+        <span class="chip">push</span><span class="chip">pull_request</span><span class="chip">merge_group</span>
+        <span class="chip">release</span><span class="chip">tag</span><span class="chip">branch protection</span>
+        <span class="chip">deployment</span><span class="chip">check_run</span><span class="chip">workflow_run</span>
+        <span class="chip">repository_dispatch</span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Trigger Targets</h2>
+      <div class="chips">
+        <span class="chip chip-purple">Jenkins</span><span class="chip chip-purple">Argo</span>
+        <span class="chip chip-red">Security Platform</span><span class="chip chip-sky">Slack</span>
+        <span class="chip chip-sky">ServiceNow</span><span class="chip chip-sky">Splunk</span>
+        <span class="chip chip-green">OpenTelemetry Collector</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Pull Request Checks — Mandatory</div>
+  <div class="grid-2">
+    <div class="card">
+      <ul class="checklist">
+        <li>Minimum 2 approvals</li>
+        <li>CODEOWNERS sign-off</li>
+        <li>AI review completed</li>
+        <li>Security review completed</li>
+        <li>Architecture review (critical modules only)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <ul class="checklist">
+        <li>Passing CI</li>
+        <li>Coverage threshold met (SonarQube)</li>
+        <li>SBOM generated</li>
+        <li>SLSA provenance attached</li>
+        <li>Signed commits, branch up to date</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section-title">AI Guardrails</div>
+  <div class="section-desc">Every AI-generated PR is automatically checked for the failure modes specific to LLM-written code, on top of the standard security pipeline. Grouped by what actually catches each one.</div>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Code Quality — caught by lint / dead-code analysis</h3>
+      <div class="chips">
+        <span class="chip chip-amber">Hallucinated Imports</span>
+        <span class="chip chip-amber">Dead Code</span>
+        <span class="chip chip-amber">Duplicate Code</span>
+        <span class="chip chip-amber">Unused Variables</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Injection &amp; Access Control — caught by SAST</h3>
+      <div class="chips">
+        <span class="chip chip-red">Prompt Injection</span>
+        <span class="chip chip-red">SQL Injection</span>
+        <span class="chip chip-red">XSS</span>
+        <span class="chip chip-red">SSRF</span>
+        <span class="chip chip-red">Command Injection</span>
+        <span class="chip chip-red">Unsafe Deserialization</span>
+        <span class="chip chip-red">Missing Auth</span>
+        <span class="chip chip-red">Missing Validation</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Data &amp; Secrets — caught by secret scan / DLP</h3>
+      <div class="chips">
+        <span class="chip chip-purple">PII Leakage</span>
+        <span class="chip chip-purple">Logging Secrets</span>
+        <span class="chip chip-purple">Hardcoded Credentials</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Coverage Gaps — caught by PR checklist review</h3>
+      <div class="chips">
+        <span class="chip chip-sky">Missing Telemetry</span>
+        <span class="chip chip-sky">Missing Unit Tests</span>
+        <span class="chip chip-sky">Missing Documentation</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">OpenTelemetry Requirements</div>
+  <div class="section-desc">No service ships without traces, metrics, and logs wired in from the first commit — retrofitting observability after an incident is too late.</div>
+
+  <div class="grid-3">
+    <div class="card">
+      <h2>Trace</h2>
+      <p>Every request gets a span tree from edge to database. Trace IDs propagate through every hop, including AI/LLM calls.</p>
+    </div>
+    <div class="card">
+      <h2>Metrics</h2>
+      <p>Request rate, error rate, latency, and saturation exported in Prometheus format from every service.</p>
+    </div>
+    <div class="card">
+      <h2>Logs</h2>
+      <p>Structured JSON logs carrying the active <code>trace_id</code> so a log line and a span are always one click apart.</p>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>Minimum Required Spans</h2>
+      <div class="chips">
+        <span class="chip chip-sky">HTTP Request</span><span class="chip chip-sky">Database</span>
+        <span class="chip chip-sky">Redis</span><span class="chip chip-sky">Kafka</span>
+        <span class="chip chip-sky">Authentication</span><span class="chip chip-sky">Authorization</span>
+        <span class="chip chip-sky">Cache</span><span class="chip chip-sky">External API</span>
+        <span class="chip chip-sky">Queue</span><span class="chip chip-sky">Filesystem</span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Every PR Validates</h2>
+      <ul class="checklist">
+        <li>Trace propagation across service boundaries</li>
+        <li>Correlation IDs present in logs</li>
+        <li>Sampling configuration is set, not default</li>
+        <li>Resource attributes populated</li>
+        <li>OTel semantic conventions followed</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section-title">Branch Protection Rules</div>
+  <div class="section-desc">The same rule set, scoped by branch. <code>main</code> carries one extra requirement — tagging — that doesn't apply upstream. Provenance is delivered <em>as</em> an attestation, so anywhere provenance is required, attestations are required too.</div>
+
+  <div class="card">
+    <table>
+      <tr><th>Rule</th><th class="center">main</th><th class="center">release/*</th><th class="center">integration</th></tr>
+      <tr><td>No force push</td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td></tr>
+      <tr><td>Linear / squash-only history</td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="dash">—</span></td></tr>
+      <tr><td>Signed, verified commits</td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td></tr>
+      <tr><td>Required reviews (CODEOWNERS)</td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td></tr>
+      <tr><td>Required status checks</td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td></tr>
+      <tr><td>Conversation resolved</td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td></tr>
+      <tr><td>No stale reviews</td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td></tr>
+      <tr><td>Branch up to date before merge</td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td></tr>
+      <tr><td>Passing security scans</td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td></tr>
+      <tr><td>SLSA provenance required</td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="dash">—</span></td></tr>
+      <tr><td>Signed container image required</td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="dash">—</span></td></tr>
+      <tr><td>SBOM upload required</td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="dash">—</span></td></tr>
+      <tr><td>Tag every release</td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="dash">—</span></td><td class="center"><span class="dash">—</span></td></tr>
+      <tr><td>Attestations attached</td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="tick">✓</span></td><td class="center"><span class="dash">—</span></td></tr>
+    </table>
+  </div>
+
+  <div class="section-title">Repository Policies — Enforced via OPA / Kyverno</div>
+  <div class="card">
+    <div class="grid-3">
+      <ul class="checklist">
+        <li>No plaintext secrets</li>
+        <li>No large binaries</li>
+        <li>No direct main commits</li>
+        <li>Mandatory CODEOWNERS</li>
+      </ul>
+      <ul class="checklist">
+        <li>Mandatory telemetry</li>
+        <li>Mandatory tests</li>
+        <li>Mandatory documentation updates</li>
+        <li>Mandatory changelog</li>
+      </ul>
+      <ul class="checklist">
+        <li>Mandatory semantic versioning</li>
+        <li>Mandatory signed commits</li>
+        <li>Mandatory Dependabot resolution</li>
+        <li>Mandatory branch naming</li>
+        <li>Mandatory Conventional Commits</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer-note">Git Branching Strategy for AI-Assisted Development — Integration-Gate Flow, a reference model for human + AI agent teams</div>
+
+</div>
+
+<script>
+function switchTab(id){
+  document.querySelectorAll('.tab-panel').forEach(function(el){el.classList.remove('active')});
+  document.querySelectorAll('.tab').forEach(function(el){el.classList.remove('active')});
+  document.getElementById('panel-'+id).classList.add('active');
+  var idx = {p1:0,p2:1,p3:2}[id];
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+}
+
+function jumpToTab(id){
+  switchTab(id);
+  document.getElementById('tabs').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function buildPipeline(svgId, stages, opts){
+  opts = opts || {};
+  var cols = opts.cols || 6;
+  var boxW = opts.boxW || 122, boxH = opts.boxH || 58;
+  var gapX = opts.gapX || 24, gapY = opts.gapY || 70;
+  var startX = opts.startX || (boxW/2 + 20), startY = opts.startY || (boxH/2 + 20);
+  var color = opts.color || '#8C94E8';
+  var fill = opts.fill || '#F7F7FC';
+  var svg = document.getElementById(svgId);
+  var colSpacing = boxW + gapX;
+  var rowSpacing = boxH + gapY;
+
+  var col = 0, dir = 1, row = 0;
+  var pos = [];
+  for (var i=0;i<stages.length;i++){
+    pos.push({col:col,row:row});
+    var atEdge = (dir===1 && col===cols-1) || (dir===-1 && col===0);
+    if (atEdge){
+      if (i < stages.length-1){ row++; dir*=-1; }
+    } else {
+      col += dir;
+    }
+  }
+  stages.forEach(function(s,i){ s._x = startX + pos[i].col*colSpacing; s._y = startY + pos[i].row*rowSpacing; s._row=pos[i].row; });
+
+  var maxRow = 0; pos.forEach(function(p){ if(p.row>maxRow) maxRow=p.row; });
+  var vbW = startX + (cols-1)*colSpacing + boxW/2 + 22;
+  var vbH = startY + maxRow*rowSpacing + boxH/2 + 22;
+  svg.setAttribute('viewBox','0 0 '+Math.round(vbW)+' '+Math.round(vbH));
+
+  var markerId = svgId+'-arrow';
+  var out = '<defs><marker id="'+markerId+'" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><polygon points="0 0,9 4,0 8" fill="'+color+'"/></marker></defs>';
+
+  var connectors = '', dots = '';
+  for (var i=0;i<stages.length-1;i++){
+    var a = stages[i], b = stages[i+1];
+    var path;
+    if (a._row === b._row){
+      var goingRight = b._x > a._x;
+      var x1 = a._x + (goingRight ? boxW/2 : -boxW/2);
+      var x2 = b._x + (goingRight ? -boxW/2 : boxW/2);
+      path = 'M'+x1+','+a._y+' L'+x2+','+a._y;
+    } else {
+      var y1 = a._y + boxH/2, y2 = b._y - boxH/2;
+      path = 'M'+a._x+','+y1+' L'+b._x+','+y2;
+    }
+    connectors += '<path d="'+path+'" fill="none" stroke="'+color+'" stroke-width="1.75" marker-end="url(#'+markerId+')"/>';
+    dots += '<circle r="3.1" fill="'+color+'"><animateMotion dur="2.4s" begin="'+(i*0.3)+'s" repeatCount="indefinite" path="'+path+'"/></circle>';
+  }
+
+  var nodes = '';
+  stages.forEach(function(s){
+    var isDark = !!s.emph;
+    var boxFill = isDark ? '#1E1B3A' : fill;
+    var textColor = isDark ? '#F9FAFB' : '#111827';
+    var subColor = isDark ? '#C7CBF0' : '#4B5563';
+    nodes += '<g>';
+    if (s.ping){
+      nodes += '<circle cx="'+s._x+'" cy="'+s._y+'" r="'+(boxW/2-4)+'" fill="none" stroke="'+color+'" stroke-width="1.5" opacity="0.35">'+
+        '<animate attributeName="r" values="'+(boxW/2-8)+';'+(boxW/2+14)+'" dur="2.2s" repeatCount="indefinite"/>'+
+        '<animate attributeName="opacity" values="0.35;0" dur="2.2s" repeatCount="indefinite"/></circle>';
+    }
+    nodes += '<rect x="'+(s._x-boxW/2)+'" y="'+(s._y-boxH/2)+'" width="'+boxW+'" height="'+boxH+'" rx="9" fill="'+boxFill+'" stroke="'+color+'" stroke-width="'+(isDark?2:1.75)+'"/>';
+    nodes += '<text x="'+s._x+'" y="'+(s._y-3)+'" text-anchor="middle" font-size="12.5" font-weight="700" fill="'+textColor+'">'+s.label+'</text>';
+    nodes += '<text x="'+s._x+'" y="'+(s._y+14)+'" text-anchor="middle" font-size="12" font-weight="500" fill="'+subColor+'">'+s.sub+'</text>';
+    nodes += '</g>';
+  });
+
+  svg.innerHTML = out + connectors + dots + nodes;
+}
+
+buildPipeline('svg-pr', [
+  {label:'Developer', sub:'Writes Code'},
+  {label:'Git Hook', sub:'Lint · Secrets'},
+  {label:'Push', sub:'To Remote'},
+  {label:'Webhook', sub:'GitHub Event'},
+  {label:'CI', sub:'Build+Validate', ping:true},
+  {label:'Security', sub:'Scan Gate'},
+  {label:'Tests', sub:'Unit + Contract'},
+  {label:'Review', sub:'AI + Human'},
+  {label:'Merge', sub:'To Integration'}
+], {cols:5, boxW:150, boxH:58, gapX:26, gapY:76, color:'#8C94E8', fill:'#F0F1FC'});
+
+buildPipeline('svg-sec', [
+  {label:'Secrets', sub:'gitleaks'},
+  {label:'SAST', sub:'SonarQube'},
+  {label:'Dependency', sub:'Grype'},
+  {label:'Container', sub:'Prisma/Clair'},
+  {label:'IaC', sub:'Checkmarx'},
+  {label:'API', sub:'OpenAPI'},
+  {label:'License', sub:'Scan'},
+  {label:'SBOM', sub:'Checkmarx'},
+  {label:'Sign Image', sub:'Cosign'},
+  {label:'Admission', sub:'Kyverno · OPA', ping:true},
+  {label:'Deploy', sub:'Cluster Apply'},
+  {label:'Runtime', sub:'Falco · Prisma'}
+], {cols:6, boxW:126, boxH:58, gapX:22, gapY:70, color:'#E38A82', fill:'#FDF1F0'});
+
+buildPipeline('svg-rel', [
+  {label:'Merge', sub:'To Integration'},
+  {label:'Build', sub:'Compile'},
+  {label:'SBOM', sub:'Checkmarx'},
+  {label:'Sign Image', sub:'Cosign'},
+  {label:'Push Image', sub:'Quay Registry'},
+  {label:'Deploy Dev', sub:'Dev Cluster'},
+  {label:'Smoke', sub:'Basic Health'},
+  {label:'Integration', sub:'E2E Suite'},
+  {label:'Deploy QA', sub:'QA Cluster'},
+  {label:'Regression', sub:'Full Suite'},
+  {label:'DAST', sub:'OWASP ZAP'},
+  {label:'Performance', sub:'Load Test'},
+  {label:'Approval', sub:'Human Gate', ping:true},
+  {label:'Release', sub:'Cut vX.Y'},
+  {label:'Canary', sub:'% Rollout'},
+  {label:'Production', sub:'main · Live', emph:true, ping:true},
+  {label:'Post-Deploy', sub:'Verify+Alert'}
+], {cols:6, boxW:128, boxH:60, gapX:20, gapY:70, color:'#A98FE8', fill:'#F5F2FE'});
+
+buildPipeline('svg-mobile', [
+  {label:'Merge', sub:'To release/vX.Y'},
+  {label:'Build Android', sub:'Gradle'},
+  {label:'Build iOS', sub:'Xcode'},
+  {label:'Unit + UI', sub:'Device Tests'},
+  {label:'HeadSpin', sub:'Device Farm'},
+  {label:'Beta Track', sub:'TestFlight'},
+  {label:'QA Sign-Off', sub:'Human Gate', ping:true},
+  {label:'Store Submit', sub:'App Stores'},
+  {label:'Store Review', sub:'Review Queue'},
+  {label:'Phased Rollout', sub:'% Rollout'},
+  {label:'Published', sub:'Live On Stores', emph:true, ping:true},
+  {label:'RASP', sub:'App Protection'}
+], {cols:6, boxW:132, boxH:60, gapX:18, gapY:72, color:'#5CB985', fill:'#EFFBF3'});
+
+buildPipeline('svg-e2e', [
+  {label:'Dev / AI', sub:'Writes Code'},
+  {label:'Branch', sub:'feature/ai/*'},
+  {label:'Local Hooks', sub:'Lint+Secrets'},
+  {label:'Push', sub:'To Remote'},
+  {label:'Webhooks', sub:'GitHub Event'},
+  {label:'CI Pipeline', sub:'Build & Scan'},
+  {label:'PR Review', sub:'AI + Human'},
+  {label:'integration', sub:'Playground', ping:true},
+  {label:'Nightly Tests', sub:'E2E + DAST'},
+  {label:'release/vX.Y', sub:'Cut Release'},
+  {label:'UAT', sub:'Validation'},
+  {label:'Canary', sub:'% Rollout'},
+  {label:'Production', sub:'main · Live', emph:true, ping:true}
+], {cols:6, boxW:150, boxH:60, gapX:20, gapY:72, color:'#8C94E8', fill:'#F0F1FC'});
+
+buildPipeline('svg-semver', [
+  {label:'Commits', sub:'Since Last Tag'},
+  {label:'Compute Bump', sub:'feat/fix/breaking'},
+  {label:'Draft Changelog', sub:'By Section'},
+  {label:'Release PR', sub:'Auto-Updated'},
+  {label:'Approval', sub:'Human Merge', ping:true},
+  {label:'Tag + Sign', sub:'Cosign+SBOM', emph:true, ping:true}
+], {cols:6, boxW:148, boxH:60, gapX:18, gapY:72, color:'#A98FE8', fill:'#F5F2FE'});
+</script>
+</body>
+</html>
