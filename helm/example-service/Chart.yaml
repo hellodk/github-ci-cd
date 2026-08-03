@@ -1,0 +1,14 @@
+apiVersion: v2
+name: example-service
+description: >-
+  Reference chart for the blog's "Helm Release Hooks" section (Tab 2) —
+  demonstrates every native helm.sh/hook type with industry-standard
+  annotations and the edge cases each one has in practice.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - reference
+  - helm-hooks
+maintainers:
+  - name: hellodk

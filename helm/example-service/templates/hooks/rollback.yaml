@@ -1,0 +1,69 @@
+{{- if .Values.hooks.rollback.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "example-service.fullname" . }}-pre-rollback-{{ .Release.Revision }}
+  labels:
+    {{- include "example-service.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-rollback
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.hooks.rollback.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.hooks.rollback.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "example-service.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "example-service.serviceAccountName" . }}
+      containers:
+        - name: pre-rollback-snapshot
+          image: "{{ .Values.hooks.rollback.image.repository }}:{{ .Values.hooks.rollback.image.tag }}"
+          # EDGE CASE: fires on manual `helm rollback` AND on the
+          # automatic rollback `--atomic` performs after a failed
+          # upgrade — same hook, two very different triggers. Record
+          # what you're rolling back FROM here (current image tag,
+          # revision) before state changes.
+          command:
+            - sh
+            - -c
+            - 'echo "pre-rollback snapshot: leaving revision {{ .Release.Revision }}"'
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 50m, memory: 32Mi}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "example-service.fullname" . }}-post-rollback-{{ .Release.Revision }}
+  labels:
+    {{- include "example-service.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-rollback
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.hooks.rollback.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.hooks.rollback.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "example-service.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "example-service.serviceAccountName" . }}
+      containers:
+        - name: post-rollback-verify
+          image: "{{ .Values.hooks.rollback.image.repository }}:{{ .Values.hooks.rollback.image.tag }}"
+          # Same smoke-test shape as post-install/post-upgrade — a
+          # rollback that "succeeds" but leaves a broken service behind
+          # is worse than the failure that triggered it.
+          command:
+            - curl
+            - -fsS
+            - "http://{{ include "example-service.fullname" . }}:{{ .Values.service.port }}"
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 50m, memory: 32Mi}
+{{- end }}

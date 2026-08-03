@@ -1,0 +1,71 @@
+{{- if .Values.hooks.delete.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "example-service.fullname" . }}-pre-delete
+  labels:
+    {{- include "example-service.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.hooks.delete.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.hooks.delete.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "example-service.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "example-service.serviceAccountName" . }}
+      containers:
+        - name: pre-delete-backup
+          image: "{{ .Values.hooks.delete.image.repository }}:{{ .Values.hooks.delete.image.tag }}"
+          # EDGE CASE: `helm uninstall --no-hooks` skips this entirely —
+          # that flag exists for genuine emergencies only. Treat any
+          # use of it on a release with a pre-delete backup hook as an
+          # incident: the safety net was deliberately bypassed.
+          # Ordering: pre-delete hooks run BEFORE this chart's other
+          # templated resources (Deployment/Service) are torn down, so
+          # the app is still reachable if this backup needs to read
+          # live state from it.
+          command: ["sh", "-c", "echo backing up state before uninstall"]
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 50m, memory: 32Mi}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "example-service.fullname" . }}-post-delete
+  labels:
+    {{- include "example-service.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-delete
+    # hook-succeeded only (no before-hook-creation): this is the very
+    # last thing that runs for this release. There is no "next attempt"
+    # to clean up a failed post-delete Job — see the chart README for
+    # the manual sweep this implies.
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  backoffLimit: {{ .Values.hooks.delete.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.hooks.delete.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "example-service.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "example-service.serviceAccountName" . }}
+      containers:
+        - name: post-delete-cleanup
+          image: "{{ .Values.hooks.delete.image.repository }}:{{ .Values.hooks.delete.image.tag }}"
+          # Runs AFTER the chart's other resources are gone — this is
+          # for cleaning up things Kubernetes itself won't garbage
+          # collect: external DNS records, load-balancer registrations,
+          # anything in a system outside this cluster.
+          command: ["sh", "-c", "echo deregistering external resources"]
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 50m, memory: 32Mi}
+{{- end }}
