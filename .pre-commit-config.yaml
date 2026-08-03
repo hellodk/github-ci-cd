@@ -1,0 +1,65 @@
+# Local git hooks — see Tab 3 ("Git Hooks") of the blog for what each
+# one does, why, and how a bypass gets caught server-side.
+#
+# Install:
+#   pip install pre-commit
+#   pre-commit install
+#
+# `default_install_hook_types` below means a plain `pre-commit install`
+# wires up pre-commit, commit-msg, post-commit, AND pre-push in one go.
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+  - post-commit
+  - pre-push
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+        args: ["--maxkb=2048"]
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: mixed-line-ending
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: branch-name-check
+        name: Enforce branch naming convention
+        entry: scripts/check-branch-name.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: commit-msg-check
+        name: Validate commit message (Conventional Commits)
+        entry: scripts/check-commit-msg.sh
+        language: script
+        pass_filenames: true
+        stages: [commit-msg]
+
+      - id: post-commit-notify
+        name: Post-commit notify (non-blocking)
+        entry: scripts/post-commit-notify.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        stages: [post-commit]
+
+      - id: pre-push-checks
+        name: Pre-push checks (tests, contracts, SAST)
+        entry: scripts/pre-push-checks.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

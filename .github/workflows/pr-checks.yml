@@ -1,0 +1,66 @@
+name: pr-checks
+
+# The CI-side twin of the local git hooks in .pre-commit-config.yaml —
+# see Tab 3's "Local hooks are fast feedback, not the enforcement
+# boundary" callout. Nothing here can be skipped with --no-verify.
+
+on:
+  pull_request:
+    branches: [integration, main]
+
+permissions:
+  contents: read
+
+jobs:
+  branch-name:
+    name: Branch naming convention
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate branch name
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          if [[ "$BRANCH" =~ ^(feature|bugfix|hotfix)/[A-Z]+-[0-9]+-[a-z0-9-]+$ ]] || \
+             [[ "$BRANCH" =~ ^ai/[a-z0-9-]+$ ]] || \
+             [[ "$BRANCH" =~ ^experiment/[a-z0-9-]+$ ]]; then
+            echo "✓ '$BRANCH' matches the naming convention"
+          else
+            echo "✗ '$BRANCH' doesn't match feature|bugfix|hotfix/JIRA-desc, ai/desc, or experiment/topic" >&2
+            exit 1
+          fi
+
+  commit-messages:
+    name: Conventional Commits (every commit in the PR)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Validate each commit message
+        run: |
+          set -e
+          base="${{ github.event.pull_request.base.sha }}"
+          head="${{ github.event.pull_request.head.sha }}"
+          for sha in $(git rev-list "$base..$head"); do
+            echo "Checking $sha"
+            git log -1 --pretty=%B "$sha" > /tmp/msg.txt
+            bash scripts/check-commit-msg.sh /tmp/msg.txt
+          done
+
+  pre-commit:
+    name: pre-commit (mirrors every local pre-commit hook)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: pre-commit/action@v3.0.1
+
+  # Enterprise scanners (SonarQube / Checkmarx / Prisma Cloud — see the
+  # Security Tooling table in Tab 2) run as additional jobs here in a
+  # real deployment. Omitted from this reference repo: it has no
+  # licensed credentials to call. Wire each in as its own job using
+  # SONAR_TOKEN / CHECKMARX_* / PRISMA_* repo secrets once they exist —
+  # same pattern as the jobs above, gated on `secrets.SONAR_TOKEN != ''`
+  # so the workflow degrades gracefully without them.

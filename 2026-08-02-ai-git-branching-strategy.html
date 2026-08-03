@@ -690,6 +690,8 @@ td.center{text-align:center}
   <div class="section-title">Git Hooks</div>
   <div class="section-desc">Two groups: hooks that run on the laptop or agent sandbox before code ever leaves it, and hooks that run server-side in CI once a PR is open. <code>git commit</code> runs <code>pre-commit</code> → <code>commit-msg</code> → <code>post-commit</code> in that order; <code>git push</code> is a separate command that later runs <code>pre-push</code>.</div>
 
+  <div class="alert alert-green"><strong>This isn't just documentation — it's running.</strong> Every hook below is a real, tested script in <a href="https://github.com/hellodk/github-ci-cd" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">github.com/hellodk/github-ci-cd</a>: <code>.pre-commit-config.yaml</code> + <code>scripts/</code> for the client-side hooks, <code>.github/workflows/</code> for their CI-side twins. <code>pip install pre-commit && pre-commit install</code> activates them in a clone.</div>
+
   <div class="alert alert-info"><strong>Local hooks are fast feedback, not the enforcement boundary.</strong> Every local check below has a required-status-check twin in CI. Skipping a local hook — deliberately with <code>--no-verify</code>, or because a tool isn't installed — just means finding out at the PR instead of on the laptop. Nothing reaches <code>main</code> without the CI-side check passing regardless of what ran locally.</div>
 
   <div class="group-label">Client-Side Hooks — Run Locally</div>

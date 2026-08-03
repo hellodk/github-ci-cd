@@ -1,0 +1,83 @@
+name: helm-ci
+
+# Server-side hook for helm/** — see Tab 3. Same skip-as-success shape
+# as terraform-ci.yml, for the same reason: no `paths:` filter on the
+# trigger, so the job always reports a status instead of leaving a
+# required check stuck pending when a PR doesn't touch helm/**.
+
+on:
+  pull_request:
+    branches: [integration, main]
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.filter.outputs.helm }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            helm:
+              - 'helm/**'
+
+  helm-ci:
+    needs: detect
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: No helm/** changes
+        if: needs.detect.outputs.changed != 'true'
+        run: echo "Skipped — no helm/** changes in this PR."
+
+      - name: Setup Helm
+        if: needs.detect.outputs.changed == 'true'
+        uses: azure/setup-helm@v4
+        with:
+          version: "v3.15.4"
+
+      - name: helm lint
+        if: needs.detect.outputs.changed == 'true'
+        run: |
+          for chart in helm/*/; do
+            helm lint "$chart"
+          done
+
+      - name: helm template
+        if: needs.detect.outputs.changed == 'true'
+        run: |
+          mkdir -p /tmp/rendered
+          for chart in helm/*/; do
+            name="$(basename "$chart")"
+            helm template "$name" "$chart" > "/tmp/rendered/${name}.yaml"
+          done
+
+      - name: kubeconform (schema validation)
+        if: needs.detect.outputs.changed == 'true'
+        uses: docker://ghcr.io/yannh/kubeconform:v0.6.7
+        with:
+          args: -strict -summary /tmp/rendered/*.yaml
+
+      - name: Chart.yaml version bump check
+        if: needs.detect.outputs.changed == 'true'
+        run: |
+          for chart in helm/*/; do
+            name="$(basename "$chart")"
+            if ! git diff --name-only "${{ github.event.pull_request.base.sha }}" HEAD | grep -q "^${chart}Chart.yaml$"; then
+              if git diff --name-only "${{ github.event.pull_request.base.sha }}" HEAD | grep -q "^${chart}"; then
+                echo "✗ $name changed but Chart.yaml wasn't version-bumped" >&2
+                exit 1
+              fi
+            fi
+          done
+
+      # Conftest/OPA policy tests and the kube-score / Prisma Cloud
+      # config scan on rendered output need policy bundles and a Prisma
+      # Cloud token this reference repo doesn't have. Wire in as
+      # additional steps gated the same way once they're available.

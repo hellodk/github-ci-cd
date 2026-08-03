@@ -1,0 +1,74 @@
+name: terraform-ci
+
+# Server-side hook for terraform/** — see Tab 3. Deliberately has NO
+# `paths:` filter on the trigger itself: a path-filtered trigger means
+# this workflow never runs at all when nothing under terraform/**
+# changed, which leaves a required status check permanently pending
+# instead of green. Detecting the change inside the job — and always
+# succeeding when there's nothing to check — is what makes "skipped,
+# no changes" a real success status instead of a stuck check.
+
+on:
+  pull_request:
+    branches: [integration, main]
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.filter.outputs.terraform }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            terraform:
+              - 'terraform/**'
+
+  terraform-ci:
+    needs: detect
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: No terraform/** changes
+        if: needs.detect.outputs.changed != 'true'
+        run: echo "Skipped — no terraform/** changes in this PR."
+
+      - name: Setup Terraform
+        if: needs.detect.outputs.changed == 'true'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.5"
+
+      - name: terraform fmt -check
+        if: needs.detect.outputs.changed == 'true'
+        run: terraform -chdir=terraform fmt -check -recursive
+
+      - name: terraform validate
+        if: needs.detect.outputs.changed == 'true'
+        run: |
+          terraform -chdir=terraform init -backend=false
+          terraform -chdir=terraform validate
+
+      - name: tflint
+        if: needs.detect.outputs.changed == 'true'
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: "v0.53.0"
+
+      - name: Run tflint
+        if: needs.detect.outputs.changed == 'true'
+        run: |
+          tflint --init
+          tflint --chdir=terraform
+
+      # checkov / tfsec, terraform plan PR comment, and Infracost need
+      # tokens this reference repo doesn't have. Wire in as additional
+      # steps gated on `if: needs.detect.outputs.changed == 'true'` once
+      # the required secrets (INFRACOST_API_KEY, cloud creds for plan)
+      # exist — see the SCA/IaC row of the Security Tooling table.
