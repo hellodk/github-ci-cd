@@ -18,7 +18,7 @@ The Git Hooks section (Tab 3) isn't just documentation — this repo runs it.
 
 ### Branch naming
 
-`<type>/<JIRA-TICKET>-<username>` — e.g. `feature/ABC-145-hellodk`, `ai/ABC-300-claude`. `experiment/*` is exempt (no ticket). This makes `git blame` → branch → owner a one-step lookup and lets `git log` cross-check that a commit's ticket matches the branch it was made on.
+`<type>/<JIRA-TICKET>-<username>` — e.g. `feature/ABC-145-hellodk`, `ai/ABC-300-agent`. `experiment/*` is exempt (no ticket). This makes `git blame` → branch → owner a one-step lookup and lets `git log` cross-check that a commit's ticket matches the branch it was made on.
 
 ### Local hooks (`.pre-commit-config.yaml` + `scripts/`)
 

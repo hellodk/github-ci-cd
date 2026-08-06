@@ -62,7 +62,7 @@ Required: <type>/<JIRA-TICKET>-<username>
   feature/ABC-145-hellodk
   bugfix/ABC-240-hellodk
   hotfix/ABC-520-hellodk
-  ai/ABC-300-claude
+  ai/ABC-300-agent
 
 Exempt (no ticket required — exploratory work):
   experiment/topic       e.g. experiment/new-ui
