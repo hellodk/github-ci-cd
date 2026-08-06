@@ -25,6 +25,11 @@ repos:
         args: ["--maxkb=2048"]
       - id: check-merge-conflict
       - id: check-yaml
+        # Helm chart templates are Go-template source, not valid YAML
+        # until `helm template` renders them — {{ .Values.x }} breaks a
+        # generic YAML parser. helm-ci.yml (Tab 3) validates these
+        # correctly by rendering first, then schema-checking the output.
+        exclude: ^helm/.*/templates/
       - id: mixed-line-ending
 
   - repo: https://github.com/gitleaks/gitleaks

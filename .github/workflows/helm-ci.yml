@@ -52,17 +52,24 @@ jobs:
       - name: helm template
         if: needs.detect.outputs.changed == 'true'
         run: |
-          mkdir -p /tmp/rendered
+          mkdir -p rendered
           for chart in helm/*/; do
             name="$(basename "$chart")"
-            helm template "$name" "$chart" > "/tmp/rendered/${name}.yaml"
+            helm template "$name" "$chart" > "rendered/${name}.yaml"
           done
 
       - name: kubeconform (schema validation)
         if: needs.detect.outputs.changed == 'true'
-        uses: docker://ghcr.io/yannh/kubeconform:v0.6.7
-        with:
-          args: -strict -summary /tmp/rendered/*.yaml
+        # A docker:// action's `args:` are passed straight to the
+        # container entrypoint — no shell in between, so `*.yaml` never
+        # glob-expands, and /tmp isn't in that action's volume mounts
+        # anyway. Installing the binary and running it as a normal
+        # shell step sidesteps both problems: the glob expands in bash
+        # like anywhere else, against the checked-out workspace.
+        run: |
+          curl -sSL "https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz" \
+            | tar xz -C /usr/local/bin kubeconform
+          kubeconform -strict -summary rendered/*.yaml
 
       - name: Chart.yaml version bump check
         if: needs.detect.outputs.changed == 'true'
