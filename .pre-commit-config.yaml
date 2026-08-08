@@ -6,9 +6,11 @@
 #   pre-commit install
 #
 # `default_install_hook_types` below means a plain `pre-commit install`
-# wires up pre-commit, commit-msg, post-commit, AND pre-push in one go.
+# wires up every stage in one go: pre-commit, prepare-commit-msg,
+# commit-msg, post-commit, AND pre-push.
 default_install_hook_types:
   - pre-commit
+  - prepare-commit-msg
   - commit-msg
   - post-commit
   - pre-push
@@ -23,6 +25,11 @@ repos:
         args: ["--maxkb=2048"]
       - id: check-merge-conflict
       - id: check-yaml
+        # Helm chart templates are Go-template source, not valid YAML
+        # until `helm template` renders them — {{ .Values.x }} breaks a
+        # generic YAML parser. helm-ci.yml (Tab 3) validates these
+        # correctly by rendering first, then schema-checking the output.
+        exclude: ^helm/.*/templates/
       - id: mixed-line-ending
 
   - repo: https://github.com/gitleaks/gitleaks
@@ -39,6 +46,22 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
+
+      - id: ticket-traceability-check
+        name: Ticket traceability (non-blocking)
+        entry: scripts/check-ticket-traceability.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        stages: [pre-commit]
+
+      - id: prepare-commit-msg
+        name: Pre-fill Jira trailer from branch name
+        entry: scripts/prepare-commit-msg.sh
+        language: script
+        pass_filenames: true
+        stages: [prepare-commit-msg]
 
       - id: commit-msg-check
         name: Validate commit message (Conventional Commits)

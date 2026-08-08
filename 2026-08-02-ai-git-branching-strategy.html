@@ -493,14 +493,15 @@ td.center{text-align:center}
   <div class="grid-2">
     <div class="card">
       <h2>Branch Naming</h2>
+      <p>Ticket + owner, not a free-text description — <code>git blame</code> → branch → owner is then a one-step lookup, and two people never collide on the same ticket. Enforced by the <code>pre-commit</code> hook and its CI twin (Tab 3).</p>
       <table>
         <tr><th>Pattern</th><th>Example</th></tr>
-        <tr><td>feature/JIRA-desc</td><td>feature/ABC-145-login</td></tr>
-        <tr><td>bugfix/JIRA-desc</td><td>bugfix/ABC-240-payment</td></tr>
-        <tr><td>hotfix/JIRA-desc</td><td>hotfix/ABC-520-search</td></tr>
+        <tr><td>feature/JIRA-user</td><td>feature/ABC-145-hellodk</td></tr>
+        <tr><td>bugfix/JIRA-user</td><td>bugfix/ABC-240-hellodk</td></tr>
+        <tr><td>hotfix/JIRA-user</td><td>hotfix/ABC-520-hellodk</td></tr>
+        <tr><td>ai/JIRA-agent</td><td>ai/ABC-300-agent</td></tr>
         <tr><td>release/vX.Y</td><td>release/v1.4</td></tr>
-        <tr><td>ai/description</td><td>ai/refactor-cache</td></tr>
-        <tr><td>experiment/topic</td><td>experiment/new-ui</td></tr>
+        <tr><td>experiment/topic</td><td>experiment/new-ui <span style="color:var(--text2);font-family:inherit;font-weight:400">— exempt, no ticket required</span></td></tr>
       </table>
     </div>
     <div class="card">
@@ -588,6 +589,7 @@ td.center{text-align:center}
       <tr><td>pre-delete / post-delete</td><td>Backup Job, external resource cleanup (DNS, LB)</td><td>Decommissioning — outside the normal promotion path</td></tr>
     </table>
     <p style="margin-top:12px"><strong>Failure policy:</strong> if a <code>pre-*</code> hook Job fails, Helm halts before touching any release resources — the same fail-closed guarantee the rest of this pipeline relies on. Hook ordering within a phase is controlled by <code>helm.sh/hook-weight</code>; cleanup of one-shot hook Jobs is controlled by <code>helm.sh/hook-delete-policy</code>.</p>
+    <div class="alert alert-green" style="margin:14px 0 0"><strong>Working chart, not just a table:</strong> <a href="https://github.com/hellodk/github-ci-cd/tree/main/helm/example-service" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">helm/example-service</a> implements all 5 hook points above with the annotations that matter in production (<code>hook-weight</code>, <code>hook-delete-policy</code>, <code>restartPolicy: Never</code>, <code>backoffLimit</code>/<code>activeDeadlineSeconds</code>) — <code>helm lint</code> and <code>helm template</code> clean. Its <a href="https://github.com/hellodk/github-ci-cd/tree/main/helm/example-service#edge-cases-the-part-the-annotations-alone-dont-tell-you" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">README</a> covers 11 edge cases the table above can't: post-hook failures don't roll back an already-live release (<code>--atomic</code> fixes this), <code>test</code> never runs automatically, why the delete policy is deliberately not <code>hook-failed</code>, idempotency requirements, and more.</div>
   </div>
 
   <div class="section-title">4 · Mobile Release Pipeline — Android &amp; iOS</div>
@@ -688,7 +690,7 @@ td.center{text-align:center}
 <div class="tab-panel" id="panel-p3">
 
   <div class="section-title">Git Hooks</div>
-  <div class="section-desc">Two groups: hooks that run on the laptop or agent sandbox before code ever leaves it, and hooks that run server-side in CI once a PR is open. <code>git commit</code> runs <code>pre-commit</code> → <code>commit-msg</code> → <code>post-commit</code> in that order; <code>git push</code> is a separate command that later runs <code>pre-push</code>.</div>
+  <div class="section-desc">Two groups: hooks that run on the laptop or agent sandbox before code ever leaves it, and hooks that run server-side in CI once a PR is open. <code>git commit</code> runs <code>pre-commit</code> → <code>prepare-commit-msg</code> → <code>commit-msg</code> → <code>post-commit</code> in that order; <code>git push</code> is a separate command that later runs <code>pre-push</code>.</div>
 
   <div class="alert alert-green"><strong>This isn't just documentation — it's running.</strong> Every hook below is a real, tested script in <a href="https://github.com/hellodk/github-ci-cd" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">github.com/hellodk/github-ci-cd</a>: <code>.pre-commit-config.yaml</code> + <code>scripts/</code> for the client-side hooks, <code>.github/workflows/</code> for their CI-side twins. <code>pip install pre-commit && pre-commit install</code> activates them in a clone.</div>
 
@@ -710,10 +712,22 @@ td.center{text-align:center}
       </div>
     </div>
     <div class="card hook-card">
+      <h2>pre-commit — ticket traceability</h2>
+      <div class="brow"><b>Purpose:</b><span>Warns when a newly added <code>HACK</code>/<code>WORKAROUND</code>/<code>XXX</code> line has no ticket ID on it. The branch name and commit trailer already give <code>git blame</code> a ticket for free on <em>every</em> line — this exists only for lines where that isn't enough, because a skimming reader needs the explanation right there.</span></div>
+      <div class="brow"><b>If not applicable:</b><span>No marker words in the diff — nothing to warn about, silent pass.</span></div>
+      <div class="brow"><b>Bypass reporting:</b><span><em>Not applicable</em> — deliberately non-blocking (exit 0 always). Requiring a ticket comment on every changed line would be impractical and just get ignored.</span></div>
+    </div>
+    <div class="card hook-card">
+      <h2>prepare-commit-msg</h2>
+      <div class="brow"><b>Purpose:</b><span>Pre-fills a <code>Jira: ABC-145</code> trailer from the branch name before the editor opens, so the ticket is present without the author retyping it.</span></div>
+      <div class="brow"><b>If not applicable:</b><span>Skips entirely for <code>git commit -m</code>, merges, squashes, and <code>--template</code> — anywhere the message is already fully decided, mutating it would be surprising.</span></div>
+      <div class="brow"><b>Bypass reporting:</b><span><em>Not applicable</em> — it only pre-fills a starting point; <code>commit-msg</code> is what actually enforces the ticket is present.</span></div>
+    </div>
+    <div class="card hook-card">
       <h2>commit-msg</h2>
-      <div class="brow"><b>Purpose:</b><span>Verifies Conventional Commits format, JIRA ticket ID present, Signed-off-by trailer present, no forbidden words, message length within limits.</span></div>
+      <div class="brow"><b>Purpose:</b><span>Conventional Commits format, blank line before the body (required for changelog parsing), correct <code>BREAKING CHANGE:</code> footer format, branch↔commit ticket cross-check, Signed-off-by trailer, no forbidden words, 72-char subject limit.</span></div>
       <div class="brow"><b>If not applicable:</b><span>Never — every commit has a message, so this hook always runs in full.</span></div>
-      <div class="brow"><b>Bypass reporting:</b><span>Same <code>--no-verify</code> path skips it locally; CI independently re-validates the message format of every commit in the PR before merge is allowed.</span></div>
+      <div class="brow"><b>Bypass reporting:</b><span>Same <code>--no-verify</code> path skips it locally; CI independently re-validates every commit in the PR <em>and</em> the PR title itself (squash-merge commits the title, not the individual commits) before merge is allowed.</span></div>
     </div>
     <div class="card hook-card">
       <h2>post-commit</h2>
@@ -745,7 +759,9 @@ td.center{text-align:center}
     </div>
   </div>
 
-  <div class="alert alert-warn"><strong>Catching <code>--no-verify</code> proactively:</strong> <code>pre-commit</code> and <code>pre-push</code> both emit a heartbeat event to the OTel Collector when they actually run. If a push reaches the GitHub webhook without a matching heartbeat for that commit SHA, CI posts a non-blocking PR comment flagging a likely local-hook bypass — informational only, since the required status checks above already prevent anything bypassed from reaching <code>main</code>.</div>
+  <div class="alert alert-warn"><strong><code>--no-verify</code> cannot be blocked from a hook — by any repo, not just this one.</strong> When that flag is passed, git skips invoking the hook script entirely; there's no code path for a hook to detect or refuse it. Anything claiming to "prevent" a local bypass from inside <code>pre-commit</code>/<code>commit-msg</code>/<code>pre-push</code> itself is describing something that can't work. The one detection layer that's still useful: <code>pre-commit</code> and <code>pre-push</code> emit a heartbeat to the OTel Collector when they <em>do</em> run — a push whose commit SHA never sent one gets a non-blocking "likely bypassed locally" PR comment. Informational only.</div>
+
+  <div class="alert alert-green"><strong>What actually prevents a bypass from reaching <code>main</code>: server-side branch protection</strong> — live on this repo's <code>main</code>, not just documented. Direct pushes are rejected by GitHub itself before any hook question even arises; 6 required status checks (branch naming, every commit message, PR title, <code>pre-commit</code> re-run, <code>terraform-ci</code>, <code>helm-ci</code>) must pass; <code>enforce_admins</code> is on, so the repo owner isn't exempt either. Verify it yourself: <code>gh api repos/hellodk/github-ci-cd/branches/main/protection</code>.</div>
 
   <div class="section-title">GitHub Webhooks</div>
   <div class="section-desc">Every branch-protected event fans out to the systems that need to react to it — build, deploy, alert, or record.</div>

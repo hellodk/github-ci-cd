@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "example-service.fullname" . }}-test-connection
+  labels:
+    {{- include "example-service.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 60
+  template:
+    metadata:
+      labels:
+        {{- include "example-service.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "example-service.serviceAccountName" . }}
+      containers:
+        - name: test-connection
+          image: "{{ .Values.hooks.helmTest.image.repository }}:{{ .Values.hooks.helmTest.image.tag }}"
+          # EDGE CASE: the `test` hook is fundamentally different from
+          # every other hook here — it does NOT run automatically on
+          # install or upgrade, `--wait` does not trigger it either.
+          # It only runs on an explicit `helm test <release>` call, and
+          # that command must be a deliberate step in the release
+          # pipeline (see the "Integration" stage of the Backend
+          # Release Pipeline in Tab 2) or it silently never executes.
+          command:
+            - curl
+            - -fsS
+            - "http://{{ include "example-service.fullname" . }}:{{ .Values.service.port }}"
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 50m, memory: 32Mi}

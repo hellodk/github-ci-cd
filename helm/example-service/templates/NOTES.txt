@@ -1,0 +1,12 @@
+example-service deployed as release {{ .Release.Name }} (revision {{ .Release.Revision }}).
+
+Hook Jobs that just ran (or will run) for this release:
+  pre-install / pre-upgrade  → db-migrate   (weight -5, aborts the release on failure)
+  post-install / post-upgrade → smoke-test  (does NOT roll back an already-applied release on failure — use --atomic)
+
+Hooks that only run on an explicit command:
+  helm test {{ .Release.Name }}       → test-connection
+  helm rollback {{ .Release.Name }}   → pre-rollback / post-rollback
+  helm uninstall {{ .Release.Name }}  → pre-delete / post-delete (skipped by --no-hooks)
+
+See helm/example-service/README.md for the full edge-case list.

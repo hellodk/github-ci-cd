@@ -1,0 +1,50 @@
+{{- if .Values.hooks.smokeTest.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "example-service.fullname" . }}-smoke-test-{{ .Release.Revision }}
+  labels:
+    {{- include "example-service.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.hooks.smokeTest.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.hooks.smokeTest.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "example-service.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "example-service.serviceAccountName" . }}
+      containers:
+        - name: smoke-test
+          image: "{{ .Values.hooks.smokeTest.image.repository }}:{{ .Values.hooks.smokeTest.image.tag }}"
+          # EDGE CASE — the most important one in this whole chart: by
+          # the time a post-install/post-upgrade hook runs, the
+          # Deployment/Service above are ALREADY applied and live. If
+          # this Job fails, Helm marks the release "failed" but does
+          # NOT roll back what's already running — you're left with a
+          # partially-verified release sitting in the cluster. Run
+          # `helm upgrade --atomic` in CI (see pr-checks.yml /
+          # release pipeline) so a failed post-hook triggers an
+          # automatic rollback instead of a manual scramble.
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              for i in $(seq 1 10); do
+                if curl -fsS "http://{{ include "example-service.fullname" . }}:{{ .Values.service.port }}{{ .Values.hooks.smokeTest.path }}"; then
+                  echo "smoke test passed"; exit 0
+                fi
+                echo "not ready yet, retrying ($i/10)"; sleep 3
+              done
+              echo "smoke test failed after 10 attempts" >&2
+              exit 1
+          resources:
+            requests: {cpu: 25m, memory: 32Mi}
+            limits: {cpu: 100m, memory: 64Mi}
+{{- end }}

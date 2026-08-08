@@ -1,0 +1,67 @@
+replicaCount: 2
+
+image:
+  repository: nginxinc/nginx-unprivileged
+  tag: "1.27-alpine"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+serviceAccount:
+  create: true
+  name: ""
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+# Every hook below is individually toggleable. Real edge case: ephemeral
+# preview/PR environments usually want migration + backup hooks disabled
+# (no real DB to migrate, nothing worth backing up) while keeping the
+# smoke test — set per-environment via `-f values-preview.yaml` or
+# `--set hooks.migration.enabled=false`, never by editing the templates.
+hooks:
+  migration:
+    enabled: true
+    image:
+      repository: migrate/migrate
+      tag: "v4.17.1"
+    databaseSecretName: example-service-db-credentials
+    backoffLimit: 1
+    activeDeadlineSeconds: 300
+
+  smokeTest:
+    enabled: true
+    image:
+      repository: curlimages/curl
+      tag: "8.9.1"
+    path: /healthz
+    backoffLimit: 2
+    activeDeadlineSeconds: 120
+
+  helmTest:
+    image:
+      repository: curlimages/curl
+      tag: "8.9.1"
+
+  rollback:
+    enabled: true
+    image:
+      repository: curlimages/curl
+      tag: "8.9.1"
+    backoffLimit: 1
+    activeDeadlineSeconds: 120
+
+  delete:
+    enabled: true
+    image:
+      repository: busybox
+      tag: "1.36.1"
+    backoffLimit: 1
+    activeDeadlineSeconds: 180

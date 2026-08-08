@@ -1,0 +1,58 @@
+{{- if .Values.hooks.migration.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  # Includes .Release.Revision so a retried install/upgrade never
+  # collides with a still-visible Job from the previous attempt even
+  # under a delete-policy race — belt-and-suspenders with
+  # before-hook-creation below, not a substitute for it.
+  name: {{ include "example-service.fullname" . }}-db-migrate-{{ .Release.Revision }}
+  labels:
+    {{- include "example-service.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    # Runs before every other pre-install/pre-upgrade hook in this
+    # chart (lower weight = earlier). Anything that depends on schema
+    # being current — e.g. a seed-data hook — should use a weight
+    # greater than -5.
+    "helm.sh/hook-weight": "-5"
+    # before-hook-creation: delete any leftover Job with this name
+    # right before creating the new one — makes retries always safe.
+    # hook-succeeded: clean up automatically once it passes. Deliberately
+    # NOT hook-failed — a failed migration Job is left in place so
+    # `kubectl logs job/...` still works for the postmortem; it gets
+    # swept on the next attempt via before-hook-creation instead.
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  # EDGE CASE: fail fast, don't let a stuck migration hang the whole
+  # release. backoffLimit + activeDeadlineSeconds bound the Job itself;
+  # `helm upgrade --timeout` bounds Helm's wait — both are needed,
+  # since Helm's timeout alone won't stop the Job from retrying inside
+  # the cluster after Helm itself has given up and reported failure.
+  backoffLimit: {{ .Values.hooks.migration.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.hooks.migration.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "example-service.selectorLabels" . | nindent 8 }}
+    spec:
+      # REQUIRED for hook Jobs: Helm does not manage pod-level restarts,
+      # the Job controller does via backoffLimit above. Never Always/OnFailure.
+      restartPolicy: Never
+      serviceAccountName: {{ include "example-service.serviceAccountName" . }}
+      containers:
+        - name: db-migrate
+          image: "{{ .Values.hooks.migration.image.repository }}:{{ .Values.hooks.migration.image.tag }}"
+          # EDGE CASE: this fires on EVERY pre-install AND pre-upgrade,
+          # not once ever. The migration tool (and the migrations
+          # themselves) must be idempotent — golang-migrate tracks
+          # applied versions in a schema_migrations table so re-running
+          # `up` on an already-current database is a safe no-op.
+          args: ["-path", "/migrations", "-database", "$(DATABASE_URL)", "up"]
+          envFrom:
+            - secretRef:
+                name: {{ .Values.hooks.migration.databaseSecretName }}
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 200m, memory: 128Mi}
+{{- end }}
