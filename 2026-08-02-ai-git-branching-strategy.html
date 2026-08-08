@@ -168,7 +168,7 @@ td.center{text-align:center}
 .stat span{display:block;font-size:11.5px;color:var(--text2);margin-top:3px;line-height:1.3}
 @media(max-width:760px){.stat-strip{flex-wrap:wrap}.stat{flex:1 1 33%;border-left:none;border-top:1px solid var(--border)}}
 
-.preview-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+.preview-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
 .pcard{border:1px solid var(--border);border-radius:10px;padding:17px 18px;background:var(--card);cursor:pointer;transition:border-color .15s,box-shadow .15s;text-align:left;font-family:inherit;display:block;width:100%;appearance:none}
 .pcard:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(67,56,202,.1)}
 .pcard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -239,6 +239,12 @@ td.center{text-align:center}
       <p>Client/server hooks with bypass reporting, AI guardrails, OpenTelemetry, branch protection, policies.</p>
       <div class="pstat">18 AI Guardrails</div>
     </button>
+    <button class="pcard" onclick="jumpToTab('p4')">
+      <div class="pnum">4</div>
+      <h3>Centralized Governance</h3>
+      <p>One hooks/policy repo, every application repo consumes it — code, Terraform, Helm — plus the answer for repos you don't administer.</p>
+      <div class="pstat">4 Enforcement Layers</div>
+    </button>
   </div>
 </div>
 
@@ -246,6 +252,7 @@ td.center{text-align:center}
   <div class="tab active" onclick="switchTab('p1')"><span class="tab-num">1</span> Branch Architecture</div>
   <div class="tab" onclick="switchTab('p2')"><span class="tab-num">2</span> Pipelines</div>
   <div class="tab" onclick="switchTab('p3')"><span class="tab-num">3</span> Hooks · Webhooks · Governance</div>
+  <div class="tab" onclick="switchTab('p4')"><span class="tab-num">4</span> Centralized Governance</div>
 </div>
 
 <div class="content">
@@ -943,6 +950,188 @@ td.center{text-align:center}
 
 </div>
 
+<!-- ══════════════════════════════════════════════════════════
+     TAB 4 — CENTRALIZED GOVERNANCE
+══════════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="panel-p4">
+
+  <div class="section-title">Why Centralize</div>
+  <div class="section-desc">Every hook, workflow, and policy in this guide currently lives inside one repo. The moment a second application repo needs the same branch-naming check, the same security pipeline, the same Helm hook conventions, you have a choice: copy-paste it (and now there are two places that drift out of sync the first time one gets updated), or centralize it — one source of truth, versioned, that every repo consumes rather than reimplements. At 50 application repos, copy-paste isn't a maintenance cost, it's a governance failure waiting to happen.</div>
+
+  <div class="diagram">
+    <div class="diagram-title">One hooks/policy repo, three distribution mechanisms — animated</div>
+    <svg viewBox="0 0 960 600" aria-label="Centralized governance architecture diagram">
+      <defs>
+        <marker id="arrGov" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><polygon points="0 0,9 4,0 8" fill="#8C94E8"/></marker>
+        <marker id="arrGovGreen" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><polygon points="0 0,9 4,0 8" fill="#5CB985"/></marker>
+        <marker id="arrGovRed" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><polygon points="0 0,9 4,0 8" fill="#E38A82"/></marker>
+      </defs>
+
+      <!-- ── hub to mechanisms ── -->
+      <path d="M220,230 L270,230 L270,90 L320,90" fill="none" stroke="#8C94E8" stroke-width="1.75" opacity=".9" marker-end="url(#arrGov)"/>
+      <path d="M220,230 L320,230" fill="none" stroke="#8C94E8" stroke-width="1.75" opacity=".9" marker-end="url(#arrGov)"/>
+      <path d="M220,230 L270,230 L270,370 L320,370" fill="none" stroke="#8C94E8" stroke-width="1.75" opacity=".9" marker-end="url(#arrGov)"/>
+
+      <!-- ── mechanisms to application repositories ── -->
+      <path d="M550,90 L630,90 L630,230 L700,230" fill="none" stroke="#5CB985" stroke-width="1.75" opacity=".9" marker-end="url(#arrGovGreen)"/>
+      <path d="M550,230 L700,230" fill="none" stroke="#5CB985" stroke-width="1.75" opacity=".9" marker-end="url(#arrGovGreen)"/>
+      <path d="M550,370 L630,370 L630,230 L700,230" fill="none" stroke="#5CB985" stroke-width="1.75" opacity=".9" marker-end="url(#arrGovGreen)"/>
+
+      <!-- flow dots -->
+      <circle r="3.2" fill="#6B74D6"><animateMotion dur="2.6s" repeatCount="indefinite" path="M220,230 L270,230 L270,90 L320,90"/></circle>
+      <circle r="3.2" fill="#6B74D6"><animateMotion dur="2.6s" begin=".7s" repeatCount="indefinite" path="M220,230 L320,230"/></circle>
+      <circle r="3.2" fill="#6B74D6"><animateMotion dur="2.6s" begin="1.4s" repeatCount="indefinite" path="M220,230 L270,230 L270,370 L320,370"/></circle>
+      <circle r="3" fill="#4A9D6E"><animateMotion dur="2.6s" begin=".3s" repeatCount="indefinite" path="M550,90 L630,90 L630,230 L700,230"/></circle>
+      <circle r="3" fill="#4A9D6E"><animateMotion dur="2.6s" begin="1s" repeatCount="indefinite" path="M550,230 L700,230"/></circle>
+      <circle r="3" fill="#4A9D6E"><animateMotion dur="2.6s" begin="1.7s" repeatCount="indefinite" path="M550,370 L630,370 L630,230 L700,230"/></circle>
+
+      <!-- radar ping on the hub -->
+      <circle cx="125" cy="230" r="95" fill="none" stroke="#8C94E8" stroke-width="1.5" opacity=".35">
+        <animate attributeName="r" values="90;125" dur="2.4s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values=".35;0" dur="2.4s" repeatCount="indefinite"/>
+      </circle>
+
+      <!-- hub: this repo -->
+      <rect x="30" y="195" width="190" height="70" rx="10" fill="#1E1B3A" stroke="#8C94E8" stroke-width="2"/>
+      <text x="125" y="226" text-anchor="middle" font-size="13" font-weight="700" fill="#F9FAFB">github-ci-cd</text>
+      <text x="125" y="244" text-anchor="middle" font-size="12" font-weight="500" fill="#C7CBF0">Hooks &amp; Policy Source</text>
+
+      <!-- mechanism: pre-commit -->
+      <rect x="320" y="60" width="230" height="60" rx="10" fill="#F4F1FE" stroke="#D2C7F7" stroke-width="1.75"/>
+      <circle cx="536" cy="74" r="4" fill="#6B3FD1"/>
+      <text x="435" y="86" text-anchor="middle" font-size="13" font-weight="700" fill="#111827">pre-commit repo:</text>
+      <text x="435" y="103" text-anchor="middle" font-size="12" font-weight="500" fill="#4B5563">Client-Side Hooks</text>
+
+      <!-- mechanism: reusable workflows -->
+      <rect x="320" y="200" width="230" height="60" rx="10" fill="#F4F1FE" stroke="#D2C7F7" stroke-width="1.75"/>
+      <circle cx="536" cy="214" r="4" fill="#6B3FD1"/>
+      <text x="435" y="226" text-anchor="middle" font-size="13" font-weight="700" fill="#111827">Reusable Workflows</text>
+      <text x="435" y="243" text-anchor="middle" font-size="12" font-weight="500" fill="#4B5563">workflow_call — CI-Side</text>
+
+      <!-- mechanism: org rulesets -->
+      <rect x="320" y="340" width="230" height="60" rx="10" fill="#F4F1FE" stroke="#D2C7F7" stroke-width="1.75"/>
+      <circle cx="536" cy="354" r="4" fill="#6B3FD1"/>
+      <text x="435" y="366" text-anchor="middle" font-size="13" font-weight="700" fill="#111827">Org Rulesets</text>
+      <text x="435" y="383" text-anchor="middle" font-size="12" font-weight="500" fill="#4B5563">Mandates Adoption</text>
+
+      <!-- application repositories -->
+      <rect x="700" y="150" width="200" height="160" rx="10" fill="#EFFBF3" stroke="#A9E4C1" stroke-width="1.75"/>
+      <circle cx="884" cy="164" r="4" fill="#157A47"/>
+      <text x="800" y="220" text-anchor="middle" font-size="13" font-weight="700" fill="#111827">Application</text>
+      <text x="800" y="238" text-anchor="middle" font-size="13" font-weight="700" fill="#111827">Repositories</text>
+      <text x="800" y="258" text-anchor="middle" font-size="12" font-weight="500" fill="#4B5563">N Repos, One Config</text>
+
+      <!-- ── not-administered repo → enforcement boundary ── -->
+      <rect x="30" y="440" width="260" height="65" rx="10" fill="#F7F6F4" stroke="#D3CFC8" stroke-width="1.75" stroke-dasharray="6 3"/>
+      <circle cx="270" cy="454" r="4" fill="#78716C"/>
+      <text x="160" y="468" text-anchor="middle" font-size="13" font-weight="700" fill="#374151">Repo You Don't Own</text>
+      <text x="160" y="486" text-anchor="middle" font-size="12" font-weight="500" fill="#4B5563">No Push Access, No Admin</text>
+
+      <path d="M160,505 L160,520" fill="none" stroke="#A8A29E" stroke-width="1.75" stroke-dasharray="4 3"/>
+      <path d="M160,520 L860,520" fill="none" stroke="#A8A29E" stroke-width="1.75" stroke-dasharray="4 3"/>
+      <path d="M415,520 L415,528" fill="none" stroke="#E38A82" stroke-width="1.75" marker-end="url(#arrGovRed)"/>
+      <path d="M635,520 L635,528" fill="none" stroke="#E38A82" stroke-width="1.75" marker-end="url(#arrGovRed)"/>
+      <path d="M855,520 L855,528" fill="none" stroke="#E38A82" stroke-width="1.75" marker-end="url(#arrGovRed)"/>
+      <circle r="3" fill="#D46A60"><animateMotion dur="2.8s" repeatCount="indefinite" path="M160,505 L160,520 L415,520 L415,528"/></circle>
+      <circle r="3" fill="#D46A60"><animateMotion dur="2.8s" begin=".9s" repeatCount="indefinite" path="M160,505 L160,520 L635,520 L635,528"/></circle>
+      <circle r="3" fill="#D46A60"><animateMotion dur="2.8s" begin="1.8s" repeatCount="indefinite" path="M160,505 L160,520 L855,520 L855,528"/></circle>
+
+      <text x="500" y="510" text-anchor="middle" font-size="12" font-weight="600" fill="#4B5563">enforcement shifts to a boundary you DO control</text>
+
+      <!-- boundary row -->
+      <rect x="320" y="528" width="190" height="55" rx="10" fill="#FDF0EF" stroke="#F0AEA8" stroke-width="1.75"/>
+      <text x="415" y="552" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Artifact Registry</text>
+      <text x="415" y="569" text-anchor="middle" font-size="11.5" font-weight="500" fill="#4B5563">Refuse Unsigned Images</text>
+
+      <rect x="540" y="528" width="190" height="55" rx="10" fill="#FDF0EF" stroke="#F0AEA8" stroke-width="1.75"/>
+      <text x="635" y="552" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Cluster Admission</text>
+      <text x="635" y="569" text-anchor="middle" font-size="11.5" font-weight="500" fill="#4B5563">Kyverno / Gatekeeper</text>
+
+      <rect x="760" y="528" width="190" height="55" rx="10" fill="#FDF0EF" stroke="#F0AEA8" stroke-width="1.75"/>
+      <text x="855" y="552" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Deployment Gateway</text>
+      <text x="855" y="569" text-anchor="middle" font-size="11.5" font-weight="500" fill="#4B5563">Verify SLSA Provenance</text>
+    </svg>
+    <div class="diagram-legend">
+      <div class="leg"><span class="leg-dot" style="background:#6B74D6"></span>This Repo → Distribution Mechanism</div>
+      <div class="leg"><span class="leg-dot" style="background:#4A9D6E"></span>Mechanism → Every Application Repo</div>
+      <div class="leg"><span class="leg-dot" style="background:#D46A60"></span>No Repo Access → Boundary Enforcement Instead</div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <h3>Client-Side — pre-commit's <code>repo:</code> field</h3>
+      <p>pre-commit was built for exactly this. <code>.pre-commit-config.yaml</code>'s <code>repo:</code> field accepts any git URL — point it at this repo instead of <code>pre-commit/pre-commit-hooks</code>, pin a <code>rev:</code>, and every consuming repo gets the same branch-naming, commit-msg, and ticket-traceability checks with zero duplicated script logic.</p>
+    </div>
+    <div class="card">
+      <h3>CI-Side — Reusable Workflows</h3>
+      <p><code>pr-checks.yml</code>, <code>terraform-ci.yml</code>, and <code>helm-ci.yml</code> become <code>workflow_call</code> targets here. Every application repo's own workflow shrinks to a two-line wrapper: <code>uses: hellodk/github-ci-cd/.github/workflows/pr-checks.yml@v1</code>. One version bump here updates every consumer's next run.</p>
+    </div>
+    <div class="card">
+      <h3>Org-Side — Repository Rulesets</h3>
+      <p>GitHub Rulesets defined once at the <em>organization</em> level, targeting <code>~ALL</code> repos matching a pattern, make the reusable workflow's status checks <em>mandatory</em> rather than opt-in — this is what turns "a repo could adopt this" into "every repo must." Requires org-owner rights, not per-repo admin.</p>
+    </div>
+  </div>
+
+  <div class="section-title">Git Hooks — Centralizing <code>pre-commit</code></div>
+  <div class="section-desc">The mechanism already exists in every repo that has a <code>.pre-commit-config.yaml</code> — it just usually points at public hook repos. Point it at yours instead.</div>
+  <div class="card">
+    <pre><span class="c"># in any application repo's .pre-commit-config.yaml</span>
+<span class="k">repos</span>:
+  - <span class="k">repo</span>: <span class="s">git@github.com:hellodk/github-ci-cd.git</span>
+    <span class="k">rev</span>: <span class="v">v1.4.0</span>          <span class="c"># pinned — never floating</span>
+    <span class="k">hooks</span>:
+      - <span class="k">id</span>: <span class="v">branch-name-check</span>
+      - <span class="k">id</span>: <span class="v">commit-msg-check</span>
+      - <span class="k">id</span>: <span class="v">ticket-traceability-check</span></pre>
+    <p style="margin-top:12px"><strong>Bootstrapping new repos:</strong> a company-wide <code>init.templateDir</code> (<code>git config --global init.templateDir ~/.git-templates</code>) seeds this config into every <code>git init</code>/<code>git clone</code> automatically. <strong>Catching skips even then:</strong> point <a href="https://pre-commit.ci" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">pre-commit.ci</a> at the same config so it re-runs server-side on every PR — the same "local hooks aren't the enforcement boundary" principle from Tab 3, applied org-wide instead of repo-wide.</p>
+  </div>
+
+  <div class="section-title">Terraform — Centralizing Modules &amp; Policy</div>
+  <div class="section-desc">Two separate things get centralized: the <em>good pattern itself</em> (as a module teams consume) and the <em>policy that rejects the bad pattern</em> (as something the run pipeline evaluates, not something each repo's CI has to remember to check).</div>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Shared Module Registry</h3>
+      <p>App teams stop hand-writing <code>for_each</code>+map S3 buckets from scratch — they consume the vetted version:</p>
+      <pre><span class="k">module</span> <span class="s">"buckets"</span> {
+  <span class="k">source</span> = <span class="s">"git::https://github.com/hellodk/github-ci-cd.git//terraform/modules/s3-bucket?ref=v1.2.0"</span>
+}</pre>
+    </div>
+    <div class="card">
+      <h3>Policy Moves to the Runner</h3>
+      <p>If every <code>terraform apply</code> routes through one shared platform — Atlantis, Terraform Cloud, Spacelift — Sentinel or OPA/Conftest policies defined <em>once</em> there apply to every workspace automatically. The enforcement point becomes the platform, not each repo's willingness to wire up <code>terraform-ci.yml</code> correctly.</p>
+    </div>
+  </div>
+
+  <div class="section-title">Helm — Centralizing Charts &amp; Admission</div>
+  <div class="section-desc">The strongest lever here isn't the repo at all — it's the cluster. A manifest gets admitted or rejected based on what it <em>is</em>, not which repo's CI produced it.</div>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Shared Chart Registry</h3>
+      <p>Publish <code>helm/example-service</code>'s pattern to an OCI registry (GHCR, Harbor, ChartMuseum). App repos <code>helm install</code> a versioned central chart instead of authoring their own release hooks from first principles — the hook edge cases in Tab 2 get solved once.</p>
+    </div>
+    <div class="card">
+      <h3>Cluster Admission — the Real Backstop</h3>
+      <p>Kyverno/OPA Gatekeeper admission policies (already the <code>Admission</code> stage of Tab 2's Security Pipeline) don't care which repo a manifest came from. A workload without the required labels, resource limits, or signed image gets rejected at <code>kubectl apply</code> regardless of source — this is the one control that works even when nothing upstream cooperated.</p>
+    </div>
+  </div>
+
+  <div class="section-title">When You Don't Control the Repo</div>
+  <div class="section-desc">This is the real question, and it has a real answer — but not the one "add a hook" implies. You cannot install a git hook into a repo you have no push access to, and you cannot configure branch protection on a repo you're not an admin of. Full stop. The lever that's actually available shifts depending on how "not controlled" the repo is.</div>
+
+  <div class="card">
+    <table>
+      <tr><th>Situation</th><th>Real Lever</th></tr>
+      <tr><td>Different team, same GitHub org</td><td>Org-level Repository Rulesets / Required Workflows — an org owner can mandate these without the individual repo owner opting in. This is the one case where you get repo-level enforcement without repo-level cooperation.</td></tr>
+      <tr><td>Genuinely external (vendor, OSS dependency)</td><td>You cannot touch their repo at all. Move enforcement to a boundary you control instead: the artifact registry (refuse unsigned/unscanned images), cluster admission (Kyverno/Gatekeeper reject non-compliant manifests regardless of origin), or a deployment gateway that verifies SLSA provenance/attestation before promoting anything.</td></tr>
+      <tr><td>Vendor relationship, contractual leverage exists</td><td>Not a technical control at all — security requirements written into the procurement contract (SOC2 evidence, scan reports, signed artifacts as a delivery condition) is the actual enforcement mechanism when there's no git access to lean on.</td></tr>
+    </table>
+  </div>
+
+  <div class="alert alert-green"><strong>The pattern underneath all three:</strong> when you can't push a hook upstream into someone else's process, you verify the output at the boundary where their work meets yours — a registry pull, a cluster admission, a deployment gate. Same principle as Tab 3's "local hooks aren't the enforcement boundary," just with the boundary moved from "your laptop vs. CI" to "their repo vs. your cluster."</div>
+
+</div>
+
 <div class="footer-note">Git Branching Strategy for AI-Assisted Development — Integration-Gate Flow, a reference model for human + AI agent teams</div>
 
 </div>
@@ -952,7 +1141,7 @@ function switchTab(id){
   document.querySelectorAll('.tab-panel').forEach(function(el){el.classList.remove('active')});
   document.querySelectorAll('.tab').forEach(function(el){el.classList.remove('active')});
   document.getElementById('panel-'+id).classList.add('active');
-  var idx = {p1:0,p2:1,p3:2}[id];
+  var idx = {p1:0,p2:1,p3:2,p4:3}[id];
   document.querySelectorAll('.tab')[idx].classList.add('active');
 }
 
