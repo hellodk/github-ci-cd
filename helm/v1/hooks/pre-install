@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# helm/v1/hooks/pre-install — installer phase
+set -euo pipefail
+PHASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$PHASE_DIR/../../../lib/common.sh"
+log_info "helm hooks v$(tool_version "$PHASE_DIR/../VERSION") pre-install"
+require_bin git || exit 1
+log_ok "pre-install checks passed"

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# terraform/v2/hooks/post-commit — org-hooks terraform v2 (non-blocking)
+set -euo pipefail
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
+printf '\033[0;32m[org-hooks]\033[0m terraform commit on %s\n' "$branch" >&2
+exit 0

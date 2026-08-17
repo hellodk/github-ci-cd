@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# helm/v1/hooks/pre-commit — org-hooks helm v1
+# Lints any Helm chart whose Chart.yaml was changed. Skips cleanly when helm is absent.
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_LIB="$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
+[ -f "$_LIB" ] || _LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../lib" && pwd)/common.sh"
+source "$_LIB"
+
+if ! command -v helm >/dev/null 2>&1; then
+  log_warn "helm not installed; skipping helm pre-commit"; exit 0
+fi
+
+log_info "helm pre-commit (org-hooks helm v$(tool_version "$SCRIPT_DIR/VERSION"))"
+
+mapfile -t CHART_DIRS < <(git diff --cached --name-only --diff-filter=ACMR | grep -E 'Chart\.yaml$' | xargs -n1 dirname 2>/dev/null || true)
+[ ${#CHART_DIRS[@]} -eq 0 ] && { log_ok "no helm charts changed"; exit 0; }
+
+fail=0
+for c in "${CHART_DIRS[@]}"; do
+  [ -d "$c" ] || continue
+  if ! helm lint "$c" >/dev/null 2>&1; then
+    log_error "helm lint failed: $c"; fail=1
+  fi
+  # values schema validation when present
+  if [ -f "$c/values.schema.json" ]; then
+    helm template "$c" >/dev/null 2>&1 || { log_error "helm template failed: $c"; fail=1; }
+  fi
+done
+
+if ((fail)); then log_error "helm pre-commit failed"; exit 1; fi
+log_ok "helm pre-commit passed"

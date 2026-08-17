@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# helm/v1/hooks/pre-push — org-hooks helm v1
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_LIB="$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
+[ -f "$_LIB" ] || _LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../lib" && pwd)/common.sh"
+source "$_LIB"
+log_info "helm pre-push (org-hooks helm v$(tool_version "$SCRIPT_DIR/VERSION"))"
+# Expensive rendering/diff checks run in CI (helm-ci). Keep local push fast.
+log_ok "helm pre-push passed (CI enforces full chart policy)"

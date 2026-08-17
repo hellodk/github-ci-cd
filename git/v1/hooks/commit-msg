@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# git/v1/hooks/commit-msg — org-hooks git v1
+# Conventional Commits + Jira ID + Signed-off-by + subject length.
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_LIB="$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
+[ -f "$_LIB" ] || _LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../lib" && pwd)/common.sh"
+source "$_LIB"
+
+MSG="$1"
+VERSION="$(tool_version "$SCRIPT_DIR/VERSION")"
+log_info "git commit-msg (org-hooks git v$VERSION)"
+
+TYPE_RE='^(feat|fix|refactor|perf|docs|test|build|ci|chore|revert)(\([a-z0-9._-]+\))?!?:[[:space:]].+'
+JIRA_RE='[A-Z][A-Z0-9]+-[0-9]+'
+
+subject=""
+while IFS= read -r l; do
+  if [ -z "$subject" ] && [ -n "$l" ]; then subject="$l"; fi
+done < "$MSG"
+
+[ -n "$subject" ] || { log_error "empty commit subject"; exit 1; }
+[[ "$subject" =~ $TYPE_RE ]] || { log_error "subject must be Conventional Commits: '<type>(scope): <desc>'"; exit 1; }
+[[ "$subject" =~ $JIRA_RE ]] || { log_error "subject must contain a Jira ID (e.g. PLAT-1234)"; exit 1; }
+((${#subject} <= 72)) || { log_error "subject exceeds 72 chars (${#subject})"; exit 1; }
+
+# Signed-off-by required by this repo's branch protection / DCO policy
+grep -Eq '^Signed-off-by: .+ <.+@.+>' "$MSG" || { log_error "missing 'Signed-off-by' trailer (git commit -s)"; exit 1; }
+
+log_ok "commit-msg valid"
