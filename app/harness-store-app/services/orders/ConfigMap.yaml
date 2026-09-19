@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: store-orders-config
+  labels:
+    app: store
+    service: orders
+    release: "1.2.0"
+data:
+  SERVICE_NAME: store-orders
+  APP_NAME: store
+  RELEASE_VERSION: "1.2.0"
+  LOG_LEVEL: "info"
+  FEATURE_FLAGS: "legacy,cart-v2,ml-reco"
+  DB_HOST: "db-prod-primary"
+  CACHE_TTL: "300"
+  THROTTLE_RATE: "250"

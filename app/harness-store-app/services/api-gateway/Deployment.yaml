@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: store-api-gateway
+  labels:
+    app: store
+    service: api-gateway
+    release: "1.2.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: store
+      service: api-gateway
+  template:
+    metadata:
+      labels:
+        app: store
+        service: api-gateway
+        release: "1.2.0"
+    spec:
+      containers:
+        - name: api-gateway
+          image: hellodk/echo-service:v1.2.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SERVICE_NAME
+              value: store-api-gateway
+            - name: APP_NAME
+              value: store
+            - name: RELEASE_VERSION
+              value: "1.2.0"
+            - name: IMAGE_TAG
+              value: "v1.2.0"
+          envFrom:
+            - configMapRef:
+                name: store-api-gateway-config
+            - secretRef:
+                name: store-api-gateway-secrets
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
