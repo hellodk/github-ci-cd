@@ -1,0 +1,39 @@
+steps:
+  #Build Docker image
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-t",
+        "$_REGION-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_REGISTRY_REPO_NAME/$_CONTAINER_NAME",
+        "--build-arg",
+        "COMMIT_SHA=$COMMIT_SHA",
+        ".",
+      ]
+  #Push Docker image to Artifact Registry
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "push",
+        "$_REGION-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_REGISTRY_REPO_NAME/$_CONTAINER_NAME",
+      ]
+
+  #Deploy Docker image to Cloud Run
+  - name: "gcr.io/cloud-builders/gcloud"
+    id: deploy-cloudrun
+    entrypoint: gcloud
+    args:
+      - "run"
+      - "deploy"
+      - "lab-agent"
+      - "--image"
+      - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_REGISTRY_REPO_NAME/$_CONTAINER_NAME"
+      - "--region"
+      - "${_REGION}"
+      - "--project"
+      - "${_PROJECT_ID}"
+
+logsBucket: gs://${PROJECT_ID}-lab-agent-logs/build-logs
+options:
+  substitutionOption: ALLOW_LOOSE
+  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET

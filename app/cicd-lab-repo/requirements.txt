@@ -1,0 +1,16 @@
+# ADK 2.5 core framework
+google-adk==2.5.0
+
+# Gemini SDK
+google-genai
+
+# OpenTelemetry Exporters (Required for ADK auto-telemetry in Cloud Run)
+opentelemetry-exporter-otlp
+opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-gcp-trace
+opentelemetry-exporter-gcp-monitoring
+opentelemetry-exporter-gcp-logging
+
+# Environment & Utilities
+python-dotenv
+google-cloud-logging

@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pay-settlement
+  labels:
+    app: payments
+    service: settlement
+    release: "1.2.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payments
+      service: settlement
+  template:
+    metadata:
+      labels:
+        app: payments
+        service: settlement
+        release: "1.2.0"
+    spec:
+      containers:
+        - name: settlement
+          image: hellodk/echo-service:v1.2.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SERVICE_NAME
+              value: pay-settlement
+            - name: APP_NAME
+              value: payments
+            - name: RELEASE_VERSION
+              value: "1.2.0"
+            - name: IMAGE_TAG
+              value: "v1.2.0"
+          envFrom:
+            - configMapRef:
+                name: pay-settlement-config
+            - secretRef:
+                name: pay-settlement-secrets
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080

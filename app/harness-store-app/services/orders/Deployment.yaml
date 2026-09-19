@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: store-orders
+  labels:
+    app: store
+    service: orders
+    release: "1.2.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: store
+      service: orders
+  template:
+    metadata:
+      labels:
+        app: store
+        service: orders
+        release: "1.2.0"
+    spec:
+      containers:
+        - name: orders
+          image: hellodk/echo-service:v1.2.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SERVICE_NAME
+              value: store-orders
+            - name: APP_NAME
+              value: store
+            - name: RELEASE_VERSION
+              value: "1.2.0"
+            - name: IMAGE_TAG
+              value: "v1.2.0"
+          envFrom:
+            - configMapRef:
+                name: store-orders-config
+            - secretRef:
+                name: store-orders-secrets
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
