@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pay-ledger-config
+  labels:
+    app: payments
+    service: ledger
+    release: "1.2.0"
+data:
+  SERVICE_NAME: pay-ledger
+  APP_NAME: payments
+  RELEASE_VERSION: "1.2.0"
+  MODE: "async"
+  RETRY_QUEUE: "kafka"
+  SETTLEMENT_BATCH: "5000"
+  LEDGER_SYNC: "realtime"
