@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# terraform/v2/hooks/post-install — installer phase
+set -euo pipefail
+PHASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$PHASE_DIR/../../../lib/common.sh"
+log_ok "terraform hooks v$(tool_version "$PHASE_DIR/../VERSION") installed into ${HOOKS_DEST:-<target>/.git/hooks}"
+log_info "These git hooks run fmt/validate at commit time. terraform-ci.yml runs plan + policy (e.g. OPA/Kyverno) server-side and is the real enforcement layer."

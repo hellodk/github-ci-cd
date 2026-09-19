@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# git/v1/hooks/post-install — runs after hooks are installed (installer phase)
+set -euo pipefail
+PHASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$PHASE_DIR/../../../lib/common.sh"
+DEST="${HOOKS_DEST:-}"
+log_ok "git hooks v$(tool_version "$PHASE_DIR/../VERSION") installed into ${DEST:-<target>/.git/hooks}"
+log_info "Note: local hooks are bypassable with 'git commit --no-verify'. Server-side branch protection + CI required-status checks are the real enforcement layer."

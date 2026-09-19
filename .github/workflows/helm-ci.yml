@@ -46,6 +46,9 @@ jobs:
         if: needs.detect.outputs.changed == 'true'
         run: |
           for chart in helm/*/; do
+            # helm/ also holds non-chart helpers (e.g. the helm/v1 hook
+            # registry) — only lint directories with a Chart.yaml.
+            [ -f "${chart}Chart.yaml" ] || { echo "Skipping ${chart} — no Chart.yaml."; continue; }
             helm lint "$chart"
           done
 
@@ -54,6 +57,7 @@ jobs:
         run: |
           mkdir -p rendered
           for chart in helm/*/; do
+            [ -f "${chart}Chart.yaml" ] || continue
             name="$(basename "$chart")"
             helm template "$name" "$chart" > "rendered/${name}.yaml"
           done
@@ -75,6 +79,7 @@ jobs:
         if: needs.detect.outputs.changed == 'true'
         run: |
           for chart in helm/*/; do
+            [ -f "${chart}Chart.yaml" ] || continue
             name="$(basename "$chart")"
             if ! git diff --name-only "${{ github.event.pull_request.base.sha }}" HEAD | grep -q "^${chart}Chart.yaml$"; then
               if git diff --name-only "${{ github.event.pull_request.base.sha }}" HEAD | grep -q "^${chart}"; then

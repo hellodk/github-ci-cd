@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# git/v1/hooks/pre-install — runs before hooks are installed (installer phase)
+set -euo pipefail
+PHASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$PHASE_DIR/../../../lib/common.sh"
+log_info "git hooks v$(tool_version "$PHASE_DIR/../VERSION") pre-install"
+require_bin git || exit 1
+require_bin bash || exit 1
+log_ok "pre-install checks passed"

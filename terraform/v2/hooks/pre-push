@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# terraform/v2/hooks/pre-push — org-hooks terraform v2
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_LIB="$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
+[ -f "$_LIB" ] || _LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../lib" && pwd)/common.sh"
+source "$_LIB"
+log_info "terraform pre-push (org-hooks terraform v$(tool_version "$SCRIPT_DIR/VERSION"))"
+log_ok "terraform pre-push passed (terraform-ci enforces plan/validate/policy)"

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# git/v1/hooks/post-commit — org-hooks git v1
+# NON-BLOCKING. Never returns non-zero. Local affordances only.
+set -euo pipefail
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
+printf '\033[0;32m[org-hooks]\033[0m committed on %s — server-side CI still enforces the full policy\n' "$branch" >&2
+exit 0
